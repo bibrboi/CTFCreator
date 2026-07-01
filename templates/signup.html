@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up — CTFCreator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-color: #000000;
+            --primary: #CF0F47;
+            --secondary: #FF0B55;
+            --text-main: #FFDEDE;
+            --card-bg: #1a1a1a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(207, 15, 71, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(207, 15, 71, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(207, 15, 71, 0.10) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            border-bottom: 1px solid #1f1f1f;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-family: 'Share Tech Mono', monospace;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .logo span { color: var(--secondary); }
+
+        .nav-link {
+            font-size: 0.9rem;
+            color: #cca8a8;
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--secondary); }
+
+        /* Main */
+        .auth-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border: 1px solid #2a2a2a;
+            border-top: 3px solid var(--primary);
+            border-radius: 0 0 10px 10px;
+            padding: 48px 44px;
+            position: relative;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-box::before,
+        .auth-box::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-color: var(--secondary);
+            border-style: solid;
+        }
+
+        .auth-box::before {
+            bottom: -1px;
+            left: -1px;
+            border-width: 0 0 2px 2px;
+        }
+
+        .auth-box::after {
+            bottom: -1px;
+            right: -1px;
+            border-width: 0 2px 2px 0;
+        }
+
+        /* Header */
+        .auth-header {
+            margin-bottom: 36px;
+            text-align: center;
+        }
+
+        .auth-header .tag {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--secondary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .auth-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--text-main);
+        }
+
+        .auth-header p {
+            margin-top: 8px;
+            font-size: 0.95rem;
+            color: #9e7070;
+            font-weight: 500;
+        }
+
+        /* Error box — NEW */
+        .error-msg {
+            display: none;
+            background: rgba(248, 113, 113, 0.08);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #f87171;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            padding: 12px 16px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .error-msg.show { display: block; }
+
+        /* Fields */
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #cca8a8;
+            margin-bottom: 8px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .input-wrap input {
+            width: 100%;
+            background: #111;
+            border: 1px solid #333;
+            color: var(--text-main);
+            padding: 13px 16px;
+            font-size: 0.95rem;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 500;
+            border-radius: 5px;
+            outline: none;
+            transition: border-color 0.25s, box-shadow 0.25s;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrap input::placeholder { color: #4a4a4a; }
+
+        .input-wrap input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(207, 15, 71, 0.12);
+        }
+
+        /* Password strength bar */
+        .strength-bar {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .strength-bar .seg {
+            flex: 1;
+            height: 3px;
+            background: #2a2a2a;
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+
+        .strength-bar.weak   .seg:nth-child(1)                        { background: #ff4444; }
+        .strength-bar.fair   .seg:nth-child(1), 
+        .strength-bar.fair   .seg:nth-child(2)                        { background: #ff8800; }
+        .strength-bar.good   .seg:nth-child(1),
+        .strength-bar.good   .seg:nth-child(2),
+        .strength-bar.good   .seg:nth-child(3)                        { background: #ddbb00; }
+        .strength-bar.strong .seg                                     { background: var(--primary); }
+
+        .strength-label {
+            font-size: 0.75rem;
+            font-family: 'Share Tech Mono', monospace;
+            color: #9e7070;
+            margin-top: 5px;
+            letter-spacing: 1px;
+            min-height: 1em;
+        }
+
+        /* Two-column row */
+        .field-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Role selector */
+        .role-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .role-option input[type="radio"] { display: none; }
+
+        .role-option label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 10px;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #9e7070;
+            text-transform: uppercase;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+            margin-bottom: 0;
+        }
+
+        .role-option label .icon { font-size: 1.3rem; }
+
+        .role-option input[type="radio"]:checked + label {
+            border-color: var(--primary);
+            color: var(--text-main);
+            background: rgba(207, 15, 71, 0.1);
+        }
+
+        /* Terms */
+        .terms-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 24px;
+            margin-top: 4px;
+        }
+
+        .terms-row input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            margin-top: 3px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .terms-row label {
+            font-size: 0.85rem;
+            color: #9e7070;
+            cursor: pointer;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .terms-row a { color: var(--secondary); text-decoration: none; }
+        .terms-row a:hover { opacity: 0.8; }
+
+        /* Submit */
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.25s, box-shadow 0.25s, transform 0.15s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-submit::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.4s;
+        }
+
+        .btn-submit:hover {
+            background: var(--secondary);
+            box-shadow: 0 0 20px rgba(255, 11, 85, 0.4);
+        }
+
+        .btn-submit:hover::after { transform: translateX(100%); }
+        .btn-submit:active { transform: scale(0.98); }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+            color: #3a3a3a;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #2a2a2a;
+        }
+
+        /* Footer link */
+        .auth-footer {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #9e7070;
+            font-weight: 500;
+        }
+
+        .auth-footer a {
+            color: var(--secondary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .auth-footer a:hover { opacity: 0.8; }
+
+        /* Scan line */
+        @keyframes scanline {
+            0%   { top: -4px; }
+            100% { top: 100%; }
+        }
+
+        .auth-box .scanline {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,11,85,0.15), transparent);
+            animation: scanline 4s linear infinite;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="logo">CTF<span>Creator</span></a>
+        <a href="/login" class="nav-link">Already a member? Login →</a>
+    </nav>
+
+    <main class="auth-wrapper">
+        <div class="auth-box">
+            <div class="scanline"></div>
+
+            <div class="auth-header">
+                <span class="tag">// Initialize Account</span>
+                <h1>Create Account</h1>
+                <p>Join the CTFCreator community</p>
+            </div>
+
+            <!-- Error message — shows server errors like "username taken" -->
+            <div class="error-msg" id="errorMsg"></div>
+
+            <div class="field-row-2">
+                <div class="field">
+                    <label>First Name</label>
+                    <div class="input-wrap">
+                        <!-- Added id="firstName" so JS can read the value -->
+                        <input type="text" id="firstName" placeholder="John">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Last Name</label>
+                    <div class="input-wrap">
+                        <!-- Added id="lastName" so JS can read the value -->
+                        <input type="text" id="lastName" placeholder="Doe">
+                    </div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Username</label>
+                <div class="input-wrap">
+                    <!-- Already had id="username", kept it -->
+                    <input type="text" id="username" placeholder="h4ck3r_alias">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Email Address</label>
+                <div class="input-wrap">
+                    <!-- Added id="email" so JS can read the value -->
+                    <input type="email" id="email" placeholder="hacker@example.com">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Password</label>
+                <div class="input-wrap">
+                    <!-- Changed id from "password-input" to "password" for consistency -->
+                    <input type="password" id="password" placeholder="••••••••••••" oninput="checkStrength(this.value)">
+                </div>
+                <div class="strength-bar" id="strength-bar">
+                    <div class="seg"></div>
+                    <div class="seg"></div>
+                    <div class="seg"></div>
+                    <div class="seg"></div>
+                </div>
+                <div class="strength-label" id="strength-label"></div>
+            </div>
+
+            <div class="field">
+                <label>Confirm Password</label>
+                <div class="input-wrap">
+                    <!-- Added id="confirmPassword" so JS can check it matches -->
+                    <input type="password" id="confirmPassword" placeholder="••••••••••••">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>I am a</label>
+                <div class="role-grid">
+                    <div class="role-option">
+                        <input type="radio" name="role" id="role-creator" value="creator" checked>
+                        <label for="role-creator">
+                            <span class="icon">⚙️</span>
+                            Challenge Creator
+                        </label>
+                    </div>
+                    <div class="role-option">
+                        <input type="radio" name="role" id="role-player" value="player">
+                        <label for="role-player">
+                            <span class="icon">🎯</span>
+                            CTF Player
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="terms-row">
+                <!-- Already had id="terms", kept it -->
+                <input type="checkbox" id="terms">
+                <label for="terms">
+                    I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                </label>
+            </div>
+
+            <!-- Added id="submitBtn" so JS can disable it while loading -->
+            <button class="btn-submit" id="submitBtn">Create Account</button>
+
+            <div class="divider">or</div>
+
+            <div class="auth-footer">
+                Already have an account? <a href="/login">Login</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Password strength bar — unchanged from your original
+        function checkStrength(val) {
+            const bar = document.getElementById('strength-bar');
+            const lbl = document.getElementById('strength-label');
+            bar.className = 'strength-bar';
+            if (!val) { lbl.textContent = ''; return; }
+            let score = 0;
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+            const levels = ['weak', 'fair', 'good', 'strong'];
+            const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+            bar.classList.add(levels[score - 1] || 'weak');
+            lbl.textContent = labels[score - 1] || 'Weak';
+        }
+
+        // Show/hide error box
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.classList.add('show');
+        }
+
+        function hideError() {
+            document.getElementById('errorMsg').classList.remove('show');
+        }
+
+        // Form submission — sends data to Flask backend
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            hideError();
+
+            // Read all field values
+            const firstName       = document.getElementById('firstName').value.trim();
+            const lastName        = document.getElementById('lastName').value.trim();
+            const username        = document.getElementById('username').value.trim();
+            const email           = document.getElementById('email').value.trim();
+            const password        = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const role            = document.querySelector('input[name="role"]:checked').value;
+            const terms           = document.getElementById('terms').checked;
+
+            // Basic client-side checks before hitting the server
+            if (!username)                   return showError('Username is required.');
+            if (!email)                      return showError('Email is required.');
+            if (!password)                   return showError('Password is required.');
+            if (password !== confirmPassword) return showError('Passwords do not match.');
+            if (password.length < 8)         return showError('Password must be at least 8 characters.');
+            if (!terms)                      return showError('You must accept the Terms of Service.');
+
+            // Disable button while waiting for server response
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating account…';
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        first_name: firstName,
+                        last_name:  lastName,
+                        username:   username,
+                        email:      email,
+                        password:   password,
+                        confirm:    confirmPassword,
+                        role:       role,
+                        terms:      terms
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.ok) {
+                    // Creators go to admin panel, players go to dashboard
+                    window.location.href = (role === 'creator') ? '/admin' : '/dashboard';
+                } else {
+                    // Server returned a validation error (e.g. username taken)
+                    showError(data.error || 'Registration failed. Please try again.');
+                    btn.disabled = false;
+                    btn.textContent = 'Create Account';
+                }
+
+            } catch (err) {
+                showError('Could not reach the server. Make sure Flask is running.');
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

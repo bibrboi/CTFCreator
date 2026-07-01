@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Challenges — CTFCreator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-color: #000000;
+            --primary: #CF0F47;
+            --secondary: #FF0B55;
+            --text-main: #FFDEDE;
+            --card-bg: #1a1a1a;
+            --card-border: #2a2a2a;
+            --muted: #9e7070;
+            --label: #cca8a8;
+            --sidebar-w: 240px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Rajdhani', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+        body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(207,15,71,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(207,15,71,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
+
+        /* ── TOPBAR ── */
+        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 0 28px; height: 60px; border-bottom: 1px solid #1f1f1f; position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); }
+        .logo { font-size: 1.35rem; font-weight: 700; letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; text-decoration: none; color: var(--text-main); }
+        .logo span { color: var(--secondary); }
+        .topbar-right { display: flex; align-items: center; gap: 18px; }
+        .topbar-icon { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #2a2a2a; background: #111; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; font-size: 1rem; }
+        .topbar-icon:hover { border-color: var(--primary); box-shadow: 0 0 10px rgba(207,15,71,0.25); }
+        .profile-wrap { position: relative; }
+        .profile-btn { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 12px 6px 6px; border: 1px solid #2a2a2a; border-radius: 30px; background: #111; transition: border-color 0.2s, box-shadow 0.2s; }
+        .profile-btn:hover { border-color: var(--primary); box-shadow: 0 0 10px rgba(207,15,71,0.2); }
+        .profile-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #6b0025); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; font-family: 'Share Tech Mono', monospace; color: white; }
+        .profile-name { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; color: var(--label); }
+        .profile-arrow { font-size: 0.65rem; color: var(--muted); transition: transform 0.2s; }
+        .profile-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 0; z-index: 200; box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
+        .profile-dropdown::before { content: ''; position: absolute; top: -10px; left: 0; right: 0; height: 10px; }
+        .profile-wrap:hover .profile-dropdown { display: block; }
+        .profile-wrap:hover .profile-arrow { transform: rotate(180deg); }
+        .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: 0.88rem; font-weight: 600; color: var(--label); cursor: pointer; letter-spacing: 0.5px; transition: background 0.15s, color 0.15s; text-decoration: none; }
+        .dropdown-item:hover { background: #222; color: var(--text-main); }
+        .dropdown-item.danger { color: #ff4a6e; }
+        .dropdown-item.danger:hover { background: rgba(255,74,110,0.08); }
+        .dropdown-divider { height: 1px; background: #2a2a2a; margin: 6px 0; }
+
+        /* ── LAYOUT ── */
+        .layout { display: flex; flex: 1; position: relative; z-index: 1; }
+        .sidebar { width: var(--sidebar-w); min-height: calc(100vh - 60px); border-right: 1px solid #1a1a1a; padding: 28px 0; position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto; flex-shrink: 0; }
+        .sidebar-section { margin-bottom: 32px; }
+        .sidebar-label { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: #4a2a2a; letter-spacing: 3px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; }
+        .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; color: var(--muted); cursor: pointer; letter-spacing: 0.5px; transition: color 0.2s, background 0.2s; border-left: 2px solid transparent; text-decoration: none; }
+        .sidebar-link:hover { color: var(--text-main); background: rgba(207,15,71,0.04); }
+        .sidebar-link.active { color: var(--secondary); border-left-color: var(--secondary); background: rgba(255,11,85,0.06); }
+        .sidebar-icon { font-size: 1rem; width: 18px; text-align: center; }
+        .new-badge { background: var(--secondary); color: white; font-size: 0.6rem; font-family: 'Share Tech Mono', monospace; padding: 2px 6px; border-radius: 3px; letter-spacing: 1px; text-transform: uppercase; margin-left: 8px; vertical-align: middle; }
+
+        /* ── MAIN ── */
+        .main { flex: 1; padding: 36px 40px; overflow-x: hidden; }
+
+        /* ── PAGE HEADER ── */
+        .page-header { margin-bottom: 32px; }
+        .page-tag { font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; color: var(--secondary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+        .page-title { font-size: 2rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; }
+        .page-subtitle { font-size: 0.92rem; color: var(--muted); font-weight: 500; }
+        .page-header-row { display: flex; align-items: flex-end; justify-content: space-between; }
+        .challenge-count { font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; color: #4a2a2a; letter-spacing: 2px; }
+        .challenge-count span { color: var(--secondary); }
+
+        /* ── FILTER BAR ── */
+        .filter-bar { background: #0d0d0d; border: 1px solid #1f1f1f; border-radius: 8px; padding: 20px 24px; margin-bottom: 32px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+        .filter-group { display: flex; flex-direction: column; gap: 8px; }
+        .filter-label { font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; color: #4a2a2a; letter-spacing: 3px; text-transform: uppercase; }
+        .chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+        .chip { padding: 5px 14px; border-radius: 4px; border: 1px solid #2a2a2a; background: #111; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.5px; color: var(--muted); cursor: pointer; transition: all 0.15s; font-family: 'Share Tech Mono', monospace; white-space: nowrap; }
+        .chip:hover { border-color: var(--primary); color: var(--text-main); }
+        .chip.active { background: rgba(207,15,71,0.15); border-color: var(--secondary); color: var(--secondary); }
+        .filter-divider { width: 1px; background: #1f1f1f; align-self: stretch; margin: 0 4px; }
+        .search-wrap { flex: 1; min-width: 200px; position: relative; }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; color: var(--muted); pointer-events: none; }
+        .search-input { width: 100%; background: #111; border: 1px solid #2a2a2a; color: var(--text-main); padding: 8px 14px 8px 34px; font-size: 0.88rem; font-family: 'Rajdhani', sans-serif; font-weight: 600; border-radius: 4px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; letter-spacing: 0.5px; }
+        .search-input::placeholder { color: #3a3a3a; }
+        .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(207,15,71,0.08); }
+
+        /* ── STATS ROW ── */
+        .stats-row { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+        .stat-pill { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 6px; }
+        .stat-pill-icon { font-size: 0.9rem; }
+        .stat-pill-val { font-family: 'Share Tech Mono', monospace; font-size: 0.88rem; color: var(--secondary); font-weight: 700; }
+        .stat-pill-lbl { font-size: 0.78rem; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; }
+
+        /* ── CHALLENGE GRID ── */
+        .challenge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+
+        /* ── CHALLENGE CARD ── */
+        .chall-card { background: var(--card-bg); border: 1px solid var(--card-border); border-top: 2px solid var(--primary); border-radius: 0 0 10px 10px; padding: 22px; cursor: pointer; transition: box-shadow 0.25s, transform 0.2s, border-color 0.2s; position: relative; overflow: hidden; animation: fadeUp 0.4s ease both; }
+        .chall-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at top left, rgba(207,15,71,0.04), transparent 60%); pointer-events: none; }
+        .chall-card:hover { box-shadow: 0 8px 32px rgba(207,15,71,0.15); transform: translateY(-3px); border-color: #3a3a3a; }
+        .chall-card.solved { border-top-color: #4ade80; }
+        .chall-card.solved::before { background: radial-gradient(circle at top left, rgba(74,222,128,0.04), transparent 60%); }
+        .chall-card.solved:hover { box-shadow: 0 8px 32px rgba(74,222,128,0.1); }
+
+        /* solved ribbon */
+        .solved-ribbon { position: absolute; top: 12px; right: -22px; background: #4ade80; color: #000; font-family: 'Share Tech Mono', monospace; font-size: 0.58rem; font-weight: 700; letter-spacing: 2px; padding: 3px 28px; transform: rotate(45deg); text-transform: uppercase; }
+
+        .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+        .card-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+        .diff-badge { padding: 3px 10px; border-radius: 3px; font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; }
+        .diff-badge.Basic        { background: rgba(74,222,128,0.1);  color: #4ade80; border: 1px solid rgba(74,222,128,0.2); }
+        .diff-badge.Intermediate { background: rgba(255,193,7,0.1);   color: #ffd47c; border: 1px solid rgba(255,193,7,0.2); }
+        .diff-badge.Advanced     { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
+        .pts-badge { font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--secondary); font-weight: 700; }
+
+        .cat-tag { display: inline-flex; align-items: center; gap: 5px; font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; color: #63b3ed; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+        .cat-dot { width: 4px; height: 4px; border-radius: 50%; background: #63b3ed; }
+        .chall-title { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.5px; color: var(--text-main); margin-bottom: 10px; line-height: 1.3; }
+        .chall-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.65; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 16px; }
+
+        .card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; border-top: 1px solid #222; }
+        .solvers-tag { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: #4a4a4a; letter-spacing: 1px; }
+        .solvers-tag span { color: var(--muted); }
+        .card-action { font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; color: var(--secondary); letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 5px; transition: gap 0.2s; }
+        .chall-card:hover .card-action { gap: 8px; }
+
+        /* file chips */
+        .file-list { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+        .file-chip { display: flex; align-items: center; gap: 5px; padding: 3px 9px; background: rgba(207,15,71,0.07); border: 1px solid rgba(207,15,71,0.18); border-radius: 3px; font-size: 0.68rem; color: var(--secondary); font-family: 'Share Tech Mono', monospace; }
+
+        /* ── EMPTY STATE ── */
+        .empty-state { text-align: center; padding: 80px 20px; }
+        .empty-icon { font-size: 3rem; margin-bottom: 16px; }
+        .empty-title { font-family: 'Share Tech Mono', monospace; font-size: 0.78rem; color: #4a2a2a; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+        .empty-sub { font-size: 0.92rem; color: var(--muted); font-weight: 500; }
+
+        /* ── MODAL OVERLAY ── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 500; display: none; align-items: center; justify-content: center; padding: 24px; }
+        .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+
+        /* ── MODAL PANEL ── */
+        .modal { background: #111; border: 1px solid #2a2a2a; border-top: 2px solid var(--primary); border-radius: 0 0 12px 12px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; position: relative; animation: slideUp 0.3s ease; }
+        .modal-header { padding: 24px 28px 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+        .modal-close { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #2a2a2a; background: #1a1a1a; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: border-color 0.2s, color 0.2s; flex-shrink: 0; }
+        .modal-close:hover { border-color: var(--primary); color: var(--text-main); }
+        .modal-meta { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 28px; border-bottom: 1px solid #1a1a1a; }
+        .modal-body { padding: 24px 28px; }
+        .modal-section-title { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: #4a2a2a; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+        .modal-desc { font-size: 0.92rem; color: var(--label); line-height: 1.8; font-weight: 500; margin-bottom: 24px; }
+        .modal-title { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.5px; line-height: 1.2; }
+
+        /* ── FLAG SUBMISSION IN MODAL ── */
+        .flag-zone { background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 8px; padding: 20px; margin-top: 8px; }
+        .flag-input-row { display: flex; gap: 10px; margin-top: 10px; }
+        .flag-input { flex: 1; background: #111; border: 1px solid #2a2a2a; color: var(--text-main); padding: 11px 14px; font-size: 0.92rem; font-family: 'Share Tech Mono', monospace; border-radius: 5px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; letter-spacing: 1px; }
+        .flag-input::placeholder { color: #3a3a3a; }
+        .flag-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(207,15,71,0.1); }
+        .btn-submit { background: var(--secondary); color: white; border: none; padding: 11px 22px; border-radius: 5px; font-size: 0.85rem; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: box-shadow 0.2s; white-space: nowrap; box-shadow: 0 0 14px rgba(255,11,85,0.25); }
+        .btn-submit:hover { box-shadow: 0 0 24px rgba(255,11,85,0.5); }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+        .flag-feedback { margin-top: 12px; padding: 10px 14px; border-radius: 5px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; font-family: 'Share Tech Mono', monospace; display: none; }
+        .flag-feedback.show { display: block; animation: fadeIn 0.2s ease; }
+        .flag-feedback.correct   { background: rgba(74,222,128,0.08);  border: 1px solid rgba(74,222,128,0.25);  color: #4ade80; }
+        .flag-feedback.incorrect { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25); color: #f87171; }
+        .flag-feedback.already   { background: rgba(99,179,237,0.08);  border: 1px solid rgba(99,179,237,0.25);  color: #63b3ed; }
+
+        /* already-solved state inside modal */
+        .solved-banner { background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.2); border-radius: 6px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+        .solved-banner-icon { font-size: 1.1rem; }
+        .solved-banner-text { font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; color: #4ade80; letter-spacing: 1px; }
+
+        /* ── RANK-UP TOAST ── */
+        #rankUpToast { position: fixed; bottom: 28px; right: 28px; z-index: 9999; background: linear-gradient(135deg, #1a0a10, #1a1a1a); border: 1px solid rgba(207,15,71,0.5); border-left: 3px solid var(--secondary); border-radius: 8px; padding: 16px 20px; min-width: 280px; box-shadow: 0 8px 32px rgba(207,15,71,0.25); display: none; }
+        #rankUpToast.visible { display: block; animation: slideInRight 0.4s ease; }
+        .toast-label { font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; color: var(--secondary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
+        .toast-rank { font-size: 1.2rem; font-weight: 700; letter-spacing: 1px; color: var(--text-main); }
+        .toast-rank span { color: var(--secondary); }
+        .toast-sub { font-size: 0.8rem; color: var(--muted); margin-top: 4px; font-weight: 500; }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+        @keyframes slideUp  { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes slideInRight { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes scanline { 0%{top:-4px} 100%{top:100%} }
+        .scanline { position:absolute; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,rgba(255,11,85,0.1),transparent); animation:scanline 5s linear infinite; pointer-events:none; }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #0d0d0d; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 780px) {
+            .sidebar { display: none; }
+            .main { padding: 24px 18px; }
+            .challenge-grid { grid-template-columns: 1fr; }
+            .filter-bar { gap: 14px; }
+            .filter-divider { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- RANK-UP TOAST -->
+<div id="rankUpToast">
+    <div class="toast-label">// Rank Up</div>
+    <div class="toast-rank">You are now <span id="toastRankLabel">—</span></div>
+    <div class="toast-sub" id="toastRankSub">Keep hacking to climb higher.</div>
+</div>
+
+<!-- CHALLENGE DETAIL MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+        <div class="scanline"></div>
+        <div class="modal-header">
+            <div>
+                <div class="cat-tag" id="modalCat"><span class="cat-dot"></span><span id="modalCatText">—</span></div>
+                <div class="modal-title" id="modalTitle">—</div>
+            </div>
+            <button class="modal-close" id="modalClose">✕</button>
+        </div>
+        <div class="modal-meta">
+            <span class="diff-badge" id="modalDiff">—</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:.75rem;color:var(--secondary);padding:3px 0;">— pts</span>
+            <span id="modalPtsSpan" style="display:none;font-family:'Share Tech Mono',monospace;font-size:.75rem;color:var(--secondary);">—</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:.72rem;color:#4a4a4a;" id="modalSolvers">0 solvers</span>
+        </div>
+        <div class="modal-body">
+            <div class="modal-section-title">// Challenge Brief</div>
+            <div class="modal-desc" id="modalDesc">—</div>
+
+            <div id="modalFiles" style="margin-bottom:20px;display:none;">
+                <div class="modal-section-title">// Attached Files</div>
+                <div class="file-list" id="modalFileList"></div>
+            </div>
+
+            <!-- Flag submission (hidden when already solved) -->
+            <div id="flagSection">
+                <div class="modal-section-title">// Submit Flag</div>
+                <div class="flag-zone">
+                    <div style="font-size:.82rem;color:var(--muted);font-weight:500;margin-bottom:2px;">Enter the flag you extracted from the challenge.</div>
+                    <div class="flag-input-row">
+                        <input type="text" class="flag-input" id="modalFlagInput" placeholder="CTF{y0ur_fl4g_h3r3}" autocomplete="off">
+                        <button class="btn-submit" id="modalSubmitBtn">🚩 Submit</button>
+                    </div>
+                    <div class="flag-feedback" id="flagFeedback"></div>
+                </div>
+            </div>
+
+            <!-- Already solved state -->
+            <div id="solvedSection" style="display:none;">
+                <div class="modal-section-title">// Flag Status</div>
+                <div class="solved-banner">
+                    <span class="solved-banner-icon">✅</span>
+                    <span class="solved-banner-text">FLAG CAPTURED — Challenge completed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TOP NAVBAR -->
+<nav class="topbar">
+    <a href="/" class="logo">CTF<span>Creator</span></a>
+    <div class="topbar-right">
+        <div class="topbar-icon" title="Notifications">🔔</div>
+        <div class="topbar-icon" title="Terminal">⌨️</div>
+        <div class="profile-wrap">
+            <div class="profile-btn">
+                <div class="profile-avatar" id="navInitials">--</div>
+                <span class="profile-name" id="navUsername">Loading…</span>
+                <span class="profile-arrow">▼</span>
+            </div>
+            <div class="profile-dropdown">
+                <a class="dropdown-item" href="#" id="dropViewProfile">👤 &nbsp;View Profile</a>
+                <a class="dropdown-item" href="#" id="dropSettings">⚙️ &nbsp;Account Settings</a>
+                <a class="dropdown-item" href="#" id="dropStats">📊 &nbsp;My Statistics</a>
+                <a class="dropdown-item" href="#" id="dropAchievements">🏆 &nbsp;Achievements</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item danger" href="#" id="logoutBtn">⏻ &nbsp;Logout</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Navigate</div>
+            <a class="sidebar-link" href="/dashboard"><span class="sidebar-icon">⬛</span> Dashboard</a>
+            <a class="sidebar-link" href="/dashboard#gen"><span class="sidebar-icon">⚡</span> Challenge Generator</a>
+            <a class="sidebar-link" href="/dashboard#solver"><span class="sidebar-icon">🤖</span> Solver Bot <span class="new-badge">AI</span></a>
+            <a class="sidebar-link" href="/dashboard#workspace"><span class="sidebar-icon">🎯</span> Workspace</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Compete</div>
+            <a class="sidebar-link" href="/leaderboard"><span class="sidebar-icon">🏆</span> Leaderboard</a>
+            <a class="sidebar-link active" href="/challenges"><span class="sidebar-icon">🔍</span> Browse Challenges</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Account</div>
+            <a class="sidebar-link" href="/dashboard#activity"><span class="sidebar-icon">📋</span> Activity Log</a>
+            <a class="sidebar-link" href="#"><span class="sidebar-icon">⚙️</span> Settings</a>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <!-- PAGE HEADER -->
+        <div class="page-header">
+            <div class="page-header-row">
+                <div>
+                    <span class="page-tag">// Browse</span>
+                    <h1 class="page-title">Challenge Catalogue</h1>
+                    <p class="page-subtitle">Pick a challenge, exploit it, capture the flag.</p>
+                </div>
+                <div class="challenge-count">Showing <span id="visibleCount">—</span> of <span id="totalCount">—</span></div>
+            </div>
+        </div>
+
+        <!-- STATS ROW -->
+        <div class="stats-row" id="statsRow">
+            <div class="stat-pill"><span class="stat-pill-icon">🏁</span><span class="stat-pill-val" id="sTotalChalls">—</span><span class="stat-pill-lbl">Total</span></div>
+            <div class="stat-pill"><span class="stat-pill-icon">✅</span><span class="stat-pill-val" id="sSolved">—</span><span class="stat-pill-lbl">Solved</span></div>
+            <div class="stat-pill"><span class="stat-pill-icon">🔓</span><span class="stat-pill-val" id="sUnsolved">—</span><span class="stat-pill-lbl">Remaining</span></div>
+            <div class="stat-pill"><span class="stat-pill-icon">🔥</span><span class="stat-pill-val" id="sAvailPts">—</span><span class="stat-pill-lbl">Points Available</span></div>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <span class="filter-label">Category</span>
+                <div class="chip-row">
+                    <div class="chip active" data-cat="all">All</div>
+                    <div class="chip" data-cat="Web Exploitation">Web</div>
+                    <div class="chip" data-cat="Cryptography">Crypto</div>
+                    <div class="chip" data-cat="Digital Forensics">Forensics</div>
+                    <div class="chip" data-cat="Reverse Engineering">Rev Eng</div>
+                    <div class="chip" data-cat="Binary Pwn">Pwn</div>
+                </div>
+            </div>
+            <div class="filter-divider"></div>
+            <div class="filter-group">
+                <span class="filter-label">Difficulty</span>
+                <div class="chip-row">
+                    <div class="chip active" data-diff="all">All</div>
+                    <div class="chip" data-diff="Basic">Basic</div>
+                    <div class="chip" data-diff="Intermediate">Intermediate</div>
+                    <div class="chip" data-diff="Advanced">Advanced</div>
+                </div>
+            </div>
+            <div class="filter-divider"></div>
+            <div class="filter-group" style="flex:1;">
+                <span class="filter-label">Search</span>
+                <div class="search-wrap">
+                    <span class="search-icon">🔍</span>
+                    <input class="search-input" id="searchInput" type="text" placeholder="Search challenges…" autocomplete="off">
+                </div>
+            </div>
+        </div>
+
+        <!-- CHALLENGE GRID -->
+        <div class="challenge-grid" id="challengeGrid">
+            <!-- populated by JS -->
+        </div>
+
+    </main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let allChallenges  = [];
+let activeCat      = 'all';
+let activeDiff     = 'all';
+let searchQuery    = '';
+let openChallenge  = null;
+
+// ═══════════════════════════════════════════════════════
+//  FETCH HELPER
+// ═══════════════════════════════════════════════════════
+async function api(path, opts = {}) {
+    const res = await fetch(path, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts
+    });
+    if (res.status === 401) { window.location.href = '/login'; return null; }
+    return res.json();
+}
+
+// ═══════════════════════════════════════════════════════
+//  RANK EMOJI HELPER
+// ═══════════════════════════════════════════════════════
+function getRankEmoji(label) {
+    return { 'Script Kiddie':'👶','CTF Player':'🎮','Hacker':'💻','Exploiter':'🔓','The Ghost':'💀' }[label] || '🎮';
+}
+
+// ═══════════════════════════════════════════════════════
+//  RANK-UP TOAST
+// ═══════════════════════════════════════════════════════
+function showRankUpToast(newLabel) {
+    const toast = document.getElementById('rankUpToast');
+    document.getElementById('toastRankLabel').textContent = `${getRankEmoji(newLabel)} ${newLabel}`;
+    document.getElementById('toastRankSub').textContent   =
+        newLabel === 'The Ghost' ? 'Maximum rank achieved. You are a legend.' : 'Keep hacking to climb higher.';
+    toast.classList.add('visible');
+    setTimeout(() => toast.classList.remove('visible'), 5000);
+}
+
+// ═══════════════════════════════════════════════════════
+//  NAV — load user info into topbar
+// ═══════════════════════════════════════════════════════
+async function loadNav() {
+    const d = await api('/api/dashboard');
+    if (!d) return;
+    document.getElementById('navInitials').textContent = d.initials;
+    document.getElementById('navUsername').textContent = d.username;
+    const profileUrl = `/profile/${d.username}`;
+    document.getElementById('dropViewProfile').href  = profileUrl;
+    document.getElementById('dropSettings').href     = profileUrl;
+    document.getElementById('dropStats').href        = profileUrl;
+    document.getElementById('dropAchievements').href = profileUrl;
+}
+
+// ═══════════════════════════════════════════════════════
+//  FILE ICON
+// ═══════════════════════════════════════════════════════
+function fileIcon(f) {
+    if (f.endsWith('.py'))           return '📄';
+    if (f.endsWith('.md'))           return '📋';
+    if (f.endsWith('.elf') || f.endsWith('.bin')) return '⚙️';
+    if (f.includes('Docker'))        return '🐋';
+    if (f.endsWith('.pem'))          return '🔑';
+    if (f.endsWith('.png') || f.endsWith('.jpg')) return '🖼️';
+    if (f.endsWith('.txt'))          return '📝';
+    if (f.endsWith('.js'))           return '📜';
+    if (f.endsWith('.c'))            return '⚙️';
+    return '📄';
+}
+
+// ═══════════════════════════════════════════════════════
+//  CATEGORY ICON
+// ═══════════════════════════════════════════════════════
+function catIcon(cat) {
+    return {
+        'Web Exploitation':   '🌐',
+        'Cryptography':       '🔐',
+        'Digital Forensics':  '🔍',
+        'Reverse Engineering':'⚙️',
+        'Binary Pwn':         '💥',
+    }[cat] || '🎯';
+}
+
+// ═══════════════════════════════════════════════════════
+//  LOAD CHALLENGES
+// ═══════════════════════════════════════════════════════
+async function loadChallenges() {
+    const data = await api('/api/challenges');
+    if (!data) return;
+    allChallenges = data;
+    updateStats();
+    renderGrid();
+}
+
+function updateStats() {
+    const total    = allChallenges.length;
+    const solved   = allChallenges.filter(c => c.solved).length;
+    const unsolved = total - solved;
+    const availPts = allChallenges.filter(c => !c.solved).reduce((s, c) => s + c.points, 0);
+
+    document.getElementById('sTotalChalls').textContent = total;
+    document.getElementById('sSolved').textContent      = solved;
+    document.getElementById('sUnsolved').textContent    = unsolved;
+    document.getElementById('sAvailPts').textContent    = availPts.toLocaleString();
+    document.getElementById('totalCount').textContent   = total;
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER GRID
+// ═══════════════════════════════════════════════════════
+function getVisible() {
+    return allChallenges.filter(c => {
+        const catMatch  = activeCat  === 'all' || c.category  === activeCat;
+        const diffMatch = activeDiff === 'all' || c.difficulty === activeDiff;
+        const q = searchQuery.toLowerCase();
+        const searchMatch = !q ||
+            c.title.toLowerCase().includes(q) ||
+            c.category.toLowerCase().includes(q) ||
+            c.description.toLowerCase().includes(q);
+        return catMatch && diffMatch && searchMatch;
+    });
+}
+
+function renderGrid() {
+    const visible = getVisible();
+    document.getElementById('visibleCount').textContent = visible.length;
+    const grid = document.getElementById('challengeGrid');
+
+    if (!visible.length) {
+        grid.innerHTML = `
+            <div class="empty-state" style="grid-column:1/-1;">
+                <div class="empty-icon">🔎</div>
+                <div class="empty-title">// No Matches Found</div>
+                <div class="empty-sub">Try a different category, difficulty, or search term.</div>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = visible.map((c, i) => `
+        <div class="chall-card ${c.solved ? 'solved' : ''}"
+             data-id="${c.id}"
+             style="animation-delay:${i * 0.04}s;">
+            ${c.solved ? '<div class="solved-ribbon">Solved</div>' : ''}
+            <div class="card-top">
+                <div>
+                    <div class="cat-tag">
+                        <span class="cat-dot"></span>
+                        ${catIcon(c.category)} ${c.category}
+                    </div>
+                    <div class="chall-title">${c.title}</div>
+                </div>
+                <div class="card-badges">
+                    <span class="diff-badge ${c.difficulty}">${c.difficulty}</span>
+                    <span class="pts-badge">${c.points} pts</span>
+                </div>
+            </div>
+            <div class="chall-desc">${c.description.replace(/<[^>]+>/g, '')}</div>
+            ${c.files && c.files.length ? `
+            <div class="file-list">
+                ${c.files.slice(0,3).map(f => `<span class="file-chip">${fileIcon(f)} ${f}</span>`).join('')}
+                ${c.files.length > 3 ? `<span class="file-chip">+${c.files.length - 3} more</span>` : ''}
+            </div>` : ''}
+            <div class="card-footer">
+                <span class="solvers-tag">👥 <span>${c.solve_count}</span> solver${c.solve_count !== 1 ? 's' : ''}</span>
+                <span class="card-action">${c.solved ? '✅ Completed' : '▶ Open →'}</span>
+            </div>
+        </div>
+    `).join('');
+
+    // attach click handlers
+    grid.querySelectorAll('.chall-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const id = parseInt(card.dataset.id);
+            const chall = allChallenges.find(c => c.id === id);
+            if (chall) openModal(chall);
+        });
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+//  FILTERS
+// ═══════════════════════════════════════════════════════
+document.querySelectorAll('.chip[data-cat]').forEach(chip => {
+    chip.addEventListener('click', function() {
+        document.querySelectorAll('.chip[data-cat]').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        activeCat = this.dataset.cat;
+        renderGrid();
+    });
+});
+
+document.querySelectorAll('.chip[data-diff]').forEach(chip => {
+    chip.addEventListener('click', function() {
+        document.querySelectorAll('.chip[data-diff]').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        activeDiff = this.dataset.diff;
+        renderGrid();
+    });
+});
+
+document.getElementById('searchInput').addEventListener('input', function() {
+    searchQuery = this.value.trim();
+    renderGrid();
+});
+
+// ═══════════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════════
+function openModal(chall) {
+    openChallenge = chall;
+
+    // populate
+    document.getElementById('modalCatText').textContent = `${catIcon(chall.category)} ${chall.category}`;
+    document.getElementById('modalTitle').textContent   = chall.title;
+    document.getElementById('modalDesc').innerHTML      = chall.description;
+
+    // diff badge
+    const diffEl = document.getElementById('modalDiff');
+    diffEl.textContent  = chall.difficulty;
+    diffEl.className    = `diff-badge ${chall.difficulty}`;
+
+    // pts + solvers
+    document.getElementById('modalPtsSpan').textContent = `${chall.points} pts`;
+    document.getElementById('modalPtsSpan').style.display = '';
+    document.getElementById('modalSolvers').textContent = `${chall.solve_count} solver${chall.solve_count !== 1 ? 's' : ''}`;
+
+    // remove old pts from meta (the plain text node)
+    const metaEl = document.querySelector('.modal-meta span[style*="display:none"]');
+    // files
+    const filesSection = document.getElementById('modalFiles');
+    const fileList     = document.getElementById('modalFileList');
+    if (chall.files && chall.files.length) {
+        fileList.innerHTML = chall.files.map(f =>
+            `<a class="file-chip" href="/files/${chall.id}/${encodeURIComponent(f)}" download style="text-decoration:none;cursor:pointer;">${fileIcon(f)} ${f} <span style="opacity:.6;">↓</span></a>`
+        ).join('');
+        filesSection.style.display = '';
+    } else {
+        filesSection.style.display = 'none';
+    }
+
+    // flag / solved sections
+    const flagSection  = document.getElementById('flagSection');
+    const solvedSection = document.getElementById('solvedSection');
+    if (chall.solved) {
+        flagSection.style.display   = 'none';
+        solvedSection.style.display = '';
+    } else {
+        flagSection.style.display   = '';
+        solvedSection.style.display = 'none';
+    }
+
+    // reset input + feedback
+    document.getElementById('modalFlagInput').value = '';
+    const fb = document.getElementById('flagFeedback');
+    fb.className = 'flag-feedback';
+    fb.textContent = '';
+    document.getElementById('modalSubmitBtn').disabled = false;
+
+    document.getElementById('modalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('modalFlagInput').focus(), 200);
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    openChallenge = null;
+}
+
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ═══════════════════════════════════════════════════════
+//  FLAG SUBMISSION
+// ═══════════════════════════════════════════════════════
+async function submitFlag() {
+    if (!openChallenge) return;
+    const flagInput = document.getElementById('modalFlagInput');
+    const flag = flagInput.value.trim();
+    if (!flag) { flagInput.focus(); return; }
+
+    const btn = document.getElementById('modalSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Checking…';
+
+    const res = await api(`/api/challenges/${openChallenge.id}/submit`, {
+        method: 'POST',
+        body: JSON.stringify({ flag })
+    });
+
+    btn.textContent = '🚩 Submit';
+
+    const fb = document.getElementById('flagFeedback');
+    fb.className = 'flag-feedback';
+
+    if (!res) { btn.disabled = false; return; }
+
+    if (res.result === 'correct') {
+        fb.textContent = `✅ ${res.message}`;
+        fb.classList.add('show', 'correct');
+
+        // mark solved in local state
+        const idx = allChallenges.findIndex(c => c.id === openChallenge.id);
+        if (idx !== -1) {
+            allChallenges[idx].solved = true;
+            allChallenges[idx].solve_count += 1;
+        }
+
+        // flip modal to solved state
+        setTimeout(() => {
+            document.getElementById('flagSection').style.display   = 'none';
+            document.getElementById('solvedSection').style.display = '';
+        }, 1200);
+
+        // update stats row + re-render grid
+        updateStats();
+        renderGrid();
+
+        // rank-up toast
+        if (res.rank_up) showRankUpToast(res.rank_up_label);
+
+    } else if (res.result === 'already_solved') {
+        fb.textContent = `ℹ️ ${res.message}`;
+        fb.classList.add('show', 'already');
+        btn.disabled = false;
+
+    } else {
+        fb.textContent = `✗ ${res.message}`;
+        fb.classList.add('show', 'incorrect');
+        btn.disabled = false;
+        flagInput.select();
+    }
+}
+
+document.getElementById('modalSubmitBtn').addEventListener('click', submitFlag);
+document.getElementById('modalFlagInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitFlag();
+});
+
+// ═══════════════════════════════════════════════════════
+//  LOGOUT
+// ═══════════════════════════════════════════════════════
+document.getElementById('logoutBtn').addEventListener('click', async e => {
+    e.preventDefault();
+    await api('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+});
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+(async () => {
+    await Promise.all([loadNav(), loadChallenges()]);
+})();
+</script>
+</body>
+</html>

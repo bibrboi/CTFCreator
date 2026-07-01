@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard — CTFCreator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-color: #000000;
+            --primary: #CF0F47;
+            --secondary: #FF0B55;
+            --text-main: #FFDEDE;
+            --card-bg: #1a1a1a;
+            --card-border: #2a2a2a;
+            --muted: #9e7070;
+            --label: #cca8a8;
+            --sidebar-w: 240px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-color); color: var(--text-main); font-family: 'Rajdhani', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+        body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(207,15,71,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(207,15,71,.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
+
+        /* ── TOPBAR ── */
+        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 0 28px; height: 60px; border-bottom: 1px solid #1f1f1f; position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); }
+        .logo { font-size: 1.35rem; font-weight: 700; letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; text-decoration: none; color: var(--text-main); }
+        .logo span { color: var(--secondary); }
+        .topbar-right { display: flex; align-items: center; gap: 18px; }
+        .topbar-icon { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #2a2a2a; background: #111; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color .2s, box-shadow .2s; font-size: 1rem; }
+        .topbar-icon:hover { border-color: var(--primary); box-shadow: 0 0 10px rgba(207,15,71,.25); }
+        .profile-wrap { position: relative; }
+        .profile-btn { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 12px 6px 6px; border: 1px solid #2a2a2a; border-radius: 30px; background: #111; transition: border-color .2s, box-shadow .2s; }
+        .profile-btn:hover { border-color: var(--primary); box-shadow: 0 0 10px rgba(207,15,71,.2); }
+        .profile-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #6b0025); display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; font-family: 'Share Tech Mono', monospace; color: white; }
+        .profile-name { font-size: .85rem; font-weight: 600; letter-spacing: .5px; color: var(--label); }
+        .profile-arrow { font-size: .65rem; color: var(--muted); transition: transform .2s; }
+        .profile-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 0; z-index: 200; box-shadow: 0 12px 40px rgba(0,0,0,.6); }
+        .profile-wrap:hover .profile-dropdown { display: block; }
+        .profile-dropdown::before { content: ''; position: absolute; top: -10px; left: 0; right: 0; height: 10px; }
+        .profile-wrap:hover .profile-arrow { transform: rotate(180deg); }
+        .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: .88rem; font-weight: 600; color: var(--label); cursor: pointer; letter-spacing: .5px; transition: background .15s, color .15s; text-decoration: none; }
+        .dropdown-item:hover { background: #222; color: var(--text-main); }
+        .dropdown-item.danger { color: #ff4a6e; }
+        .dropdown-item.danger:hover { background: rgba(255,74,110,.08); }
+        .dropdown-divider { height: 1px; background: #2a2a2a; margin: 6px 0; }
+
+        /* ── LAYOUT ── */
+        .layout { display: flex; flex: 1; position: relative; z-index: 1; }
+        .sidebar { width: var(--sidebar-w); min-height: calc(100vh - 60px); border-right: 1px solid #1a1a1a; padding: 28px 0; position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto; flex-shrink: 0; }
+        .sidebar-section { margin-bottom: 32px; }
+        .sidebar-label { font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: #4a2a2a; letter-spacing: 3px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; }
+        .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 10px 20px; font-size: .9rem; font-weight: 600; color: var(--muted); cursor: pointer; letter-spacing: .5px; transition: color .2s, background .2s; border-left: 2px solid transparent; text-decoration: none; }
+        .sidebar-link:hover { color: var(--text-main); background: rgba(207,15,71,.04); }
+        .sidebar-link.active { color: var(--secondary); border-left-color: var(--secondary); background: rgba(255,11,85,.06); }
+        .sidebar-icon { font-size: 1rem; width: 18px; text-align: center; }
+        .new-badge { background: var(--secondary); color: white; font-size: .6rem; font-family: 'Share Tech Mono', monospace; padding: 2px 6px; border-radius: 3px; letter-spacing: 1px; text-transform: uppercase; margin-left: 8px; }
+
+        /* ── MAIN ── */
+        .main { flex: 1; padding: 36px 40px; overflow-x: hidden; }
+
+        /* ── PAGE HEADER ── */
+        .page-tag { font-family: 'Share Tech Mono', monospace; font-size: .68rem; color: var(--secondary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+        .page-title { font-size: 2rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; }
+        .page-subtitle { font-size: .92rem; color: var(--muted); font-weight: 500; }
+        .page-header { margin-bottom: 32px; }
+
+        /* ── PODIUM ── */
+        .podium { display: flex; justify-content: center; align-items: flex-end; gap: 16px; margin-bottom: 40px; }
+        .podium-slot { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .podium-avatar { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Share Tech Mono', monospace; font-weight: 700; border: 2px solid; cursor: pointer; transition: transform .2s, box-shadow .2s; text-decoration: none; }
+        .podium-avatar:hover { transform: translateY(-4px); }
+        .podium-slot:nth-child(1) .podium-avatar { width: 64px; height: 64px; font-size: 1.3rem; background: linear-gradient(135deg,#c0c0c0,#808080); border-color: #c0c0c0; color: #000; box-shadow: 0 0 20px rgba(192,192,192,.2); }
+        .podium-slot:nth-child(2) .podium-avatar { width: 80px; height: 80px; font-size: 1.6rem; background: linear-gradient(135deg,#ffd700,#b8860b); border-color: #ffd700; color: #000; box-shadow: 0 0 28px rgba(255,215,0,.3); }
+        .podium-slot:nth-child(3) .podium-avatar { width: 56px; height: 56px; font-size: 1.1rem; background: linear-gradient(135deg,#cd7f32,#7c4a1a); border-color: #cd7f32; color: #fff; box-shadow: 0 0 16px rgba(205,127,50,.2); }
+        .podium-crown { font-size: 1.4rem; line-height: 1; }
+        .podium-name { font-family: 'Share Tech Mono', monospace; font-size: .72rem; color: var(--label); letter-spacing: 1px; text-align: center; }
+        .podium-pts  { font-family: 'Share Tech Mono', monospace; font-size: .8rem; font-weight: 700; text-align: center; }
+        .podium-slot:nth-child(1) .podium-pts { color: #c0c0c0; }
+        .podium-slot:nth-child(2) .podium-pts { color: #ffd700; font-size: .92rem; }
+        .podium-slot:nth-child(3) .podium-pts { color: #cd7f32; }
+        .podium-block { border-radius: 4px 4px 0 0; width: 80px; }
+        .podium-slot:nth-child(1) .podium-block { height: 48px; background: linear-gradient(180deg,#c0c0c020,#c0c0c008); border: 1px solid #c0c0c030; }
+        .podium-slot:nth-child(2) .podium-block { height: 72px; background: linear-gradient(180deg,#ffd70020,#ffd70008); border: 1px solid #ffd70030; }
+        .podium-slot:nth-child(3) .podium-block { height: 36px; background: linear-gradient(180deg,#cd7f3220,#cd7f3208); border: 1px solid #cd7f3230; }
+
+        /* ── STATS ROW ── */
+        .stats-row { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+        .stat-pill { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 6px; }
+        .stat-pill-val { font-family: 'Share Tech Mono', monospace; font-size: .88rem; color: var(--secondary); }
+        .stat-pill-lbl { font-size: .78rem; color: var(--muted); font-weight: 600; }
+
+        /* ── FULL TABLE ── */
+        .table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-top: 2px solid var(--primary); border-radius: 0 0 12px 12px; overflow: hidden; position: relative; }
+        .scanline { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg,transparent,rgba(255,11,85,.08),transparent); animation: scanline 6s linear infinite; pointer-events: none; z-index: 1; }
+        .lb-table { width: 100%; border-collapse: collapse; }
+        .lb-table thead tr { border-bottom: 1px solid #222; }
+        .lb-table th { padding: 14px 18px; font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: #4a2a2a; letter-spacing: 3px; text-transform: uppercase; font-weight: 400; text-align: left; }
+        .lb-table td { padding: 14px 18px; font-size: .9rem; font-weight: 600; color: var(--label); border-bottom: 1px solid #161616; }
+        .lb-table tbody tr { transition: background .15s; }
+        .lb-table tbody tr:hover td { background: rgba(207,15,71,.04); }
+        .lb-table tbody tr:last-child td { border-bottom: none; }
+        .lb-table tbody tr.is-me td { background: rgba(207,15,71,.06); }
+
+        .rank-num { font-family: 'Share Tech Mono', monospace; font-size: .85rem; color: var(--muted); }
+        .rank-num.gold   { color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,.4); }
+        .rank-num.silver { color: #c0c0c0; }
+        .rank-num.bronze { color: #cd7f32; }
+
+        .user-cell { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 700; font-family: 'Share Tech Mono', monospace; flex-shrink: 0; }
+        .user-link { color: var(--label); text-decoration: none; font-weight: 600; transition: color .2s; }
+        .user-link:hover { color: var(--secondary); }
+        .you-tag { font-size: .62rem; color: #4a2a2a; margin-left: 6px; font-family: 'Share Tech Mono', monospace; letter-spacing: 1px; }
+
+        .pts-cell { font-family: 'Share Tech Mono', monospace; color: var(--secondary); }
+        .rank-pill { display: inline-block; padding: 3px 10px; border-radius: 3px; font-family: 'Share Tech Mono', monospace; font-size: .62rem; letter-spacing: 1px; text-transform: uppercase; background: rgba(207,15,71,.1); color: var(--secondary); border: 1px solid rgba(207,15,71,.2); white-space: nowrap; }
+        .badge-list { display: flex; gap: 4px; }
+        .badge { width: 22px; height: 22px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: .75rem; }
+
+        /* ── EMPTY ── */
+        .empty { padding: 60px 20px; text-align: center; }
+        .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .empty-title { font-family: 'Share Tech Mono', monospace; font-size: .72rem; color: #4a2a2a; letter-spacing: 3px; margin-bottom: 8px; }
+        .empty-sub { font-size: .88rem; color: var(--muted); font-weight: 500; }
+
+        /* ── ANIMATIONS ── */
+        @keyframes scanline { 0%{top:-4px} 100%{top:100%} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        .fade-in { animation: fadeUp .4s ease both; }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0d0d0d; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        @media (max-width: 780px) {
+            .sidebar { display: none; }
+            .main { padding: 24px 18px; }
+            .podium { gap: 10px; }
+            .th-badges, .td-badges { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+    <a href="/" class="logo">CTF<span>Creator</span></a>
+    <div class="topbar-right">
+        <div class="topbar-icon">🔔</div>
+        <div class="topbar-icon">⌨️</div>
+        <div class="profile-wrap">
+            <div class="profile-btn">
+                <div class="profile-avatar" id="navInitials">--</div>
+                <span class="profile-name" id="navUsername">Loading…</span>
+                <span class="profile-arrow">▼</span>
+            </div>
+            <div class="profile-dropdown">
+                <a class="dropdown-item" href="#" id="dropViewProfile">👤 &nbsp;View Profile</a>
+                <a class="dropdown-item" href="#" id="dropSettings">⚙️ &nbsp;Account Settings</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item danger" id="logoutBtn" href="#">⏻ &nbsp;Logout</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Navigate</div>
+            <a class="sidebar-link" href="/dashboard"><span class="sidebar-icon">⬛</span> Dashboard</a>
+            <a class="sidebar-link" href="/dashboard#gen"><span class="sidebar-icon">⚡</span> Challenge Generator</a>
+            <a class="sidebar-link" href="/dashboard#solver"><span class="sidebar-icon">🤖</span> Solver Bot <span class="new-badge">AI</span></a>
+            <a class="sidebar-link" href="/dashboard#workspace"><span class="sidebar-icon">🎯</span> Workspace</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Compete</div>
+            <a class="sidebar-link active" href="/leaderboard"><span class="sidebar-icon">🏆</span> Leaderboard</a>
+            <a class="sidebar-link" href="/challenges"><span class="sidebar-icon">🔍</span> Browse Challenges</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Account</div>
+            <a class="sidebar-link" href="/dashboard#activity"><span class="sidebar-icon">📋</span> Activity Log</a>
+            <a class="sidebar-link" href="#"><span class="sidebar-icon">⚙️</span> Settings</a>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <div class="page-header fade-in">
+            <span class="page-tag">// Global Rankings</span>
+            <h1 class="page-title">Leaderboard</h1>
+            <p class="page-subtitle">The top operators ranked by total points. Click any name to view their profile.</p>
+        </div>
+
+        <!-- STATS ROW -->
+        <div class="stats-row fade-in" id="statsRow" style="animation-delay:.05s;">
+            <div class="stat-pill">👥 <span class="stat-pill-val" id="sTotalPlayers">—</span> <span class="stat-pill-lbl">Players</span></div>
+            <div class="stat-pill">🏆 <span class="stat-pill-val" id="sYourRank">—</span> <span class="stat-pill-lbl">Your Rank</span></div>
+            <div class="stat-pill">🔥 <span class="stat-pill-val" id="sTopPts">—</span> <span class="stat-pill-lbl">Top Score</span></div>
+        </div>
+
+        <!-- PODIUM (top 3 only, hidden until data loads) -->
+        <div class="podium fade-in" id="podium" style="display:none;animation-delay:.1s;"></div>        <!-- FULL TABLE -->
+        <div class="table-card fade-in" style="animation-delay:.15s;">
+            <div class="scanline"></div>
+            <table class="lb-table">
+                <thead>
+                    <tr>
+                        <th style="width:52px;">#</th>
+                        <th>Operator</th>
+                        <th>Points</th>
+                        <th>Rank</th>
+                        <th class="th-badges">Badges</th>
+                    </tr>
+                </thead>
+                <tbody id="lbBody">
+                    <tr><td colspan="5" style="padding:40px;text-align:center;color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:.8rem;">Loading operators…</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+</div>
+
+<script>
+async function api(path, opts = {}) {
+    const res = await fetch(path, { headers: {'Content-Type':'application/json'}, ...opts });
+    if (res.status === 401) { window.location.href = '/login'; return null; }
+    return res.json();
+}
+
+function getRankEmoji(label) {
+    return {'Script Kiddie':'👶','CTF Player':'🎮','Hacker':'💻','Exploiter':'🔓','The Ghost':'💀'}[label] || '🎮';
+}
+
+const rankClass  = r => r === 1 ? 'gold' : r === 2 ? 'silver' : r === 3 ? 'bronze' : '';
+const avatarBg   = r => {
+    if (r === 1) return 'background:linear-gradient(135deg,#ffd700,#b8860b);color:#000;';
+    if (r === 2) return 'background:linear-gradient(135deg,#c0c0c0,#808080);color:#000;';
+    if (r === 3) return 'background:linear-gradient(135deg,#cd7f32,#7c4a1a);color:#fff;';
+    return 'background:linear-gradient(135deg,#2a2a2a,#1a1a1a);color:#cca8a8;';
+};
+
+async function load() {
+    const [rows, me] = await Promise.all([api('/api/leaderboard'), api('/api/dashboard')]);
+    if (!rows || !me) return;
+
+    // nav
+    document.getElementById('navInitials').textContent = me.initials;
+    document.getElementById('navUsername').textContent  = me.username;
+    const profileUrl = `/profile/${me.username}`;
+    document.getElementById('dropViewProfile').href = profileUrl;
+    document.getElementById('dropSettings').href    = profileUrl;
+
+    // stats
+    document.getElementById('sTotalPlayers').textContent = rows.length;
+    document.getElementById('sYourRank').textContent     = `#${me.global_rank}`;
+    document.getElementById('sTopPts').textContent       = rows.length ? rows[0].points.toLocaleString() : '0';
+
+    // podium (classic Olympic: 2nd left, 1st center, 3rd right)
+    const podiumEl = document.getElementById('podium');
+    if (rows.length >= 1) {
+        const crowns = ['🥈', '🥇', '🥉'];
+        // slot order: rank2, rank1, rank3
+        const podiumOrder = [rows[1] || null, rows[0] || null, rows[2] || null];
+        podiumEl.innerHTML = podiumOrder.map((u, i) => {
+            if (!u) return '';
+            return `
+            <div class="podium-slot">
+                <div class="podium-crown">${crowns[i]}</div>
+                <a class="podium-avatar" href="/profile/${u.username}" title="${u.username}">${u.initials}</a>
+                <div class="podium-name">${u.username}</div>
+                <div class="podium-pts">${u.points.toLocaleString()}</div>
+                <div class="podium-block"></div>
+            </div>`;
+        }).join('');
+        podiumEl.style.display = 'flex';
+    }
+
+    // empty state
+    if (!rows.length) {
+    
+        document.getElementById('lbBody').innerHTML = `
+            <tr><td colspan="5">
+                <div class="empty">
+                    <div class="empty-icon">🏆</div>
+                    <div class="empty-title">// No Operators Yet</div>
+                    <div class="empty-sub">Be the first to register and claim the #1 spot.</div>
+                </div>
+            </td></tr>`;
+        return;
+    }
+
+
+    // full table
+    document.getElementById('lbBody').innerHTML = rows.map(u => `
+        <tr class="${u.is_me ? 'is-me' : ''}">
+            <td><span class="rank-num ${rankClass(u.rank)}">${String(u.rank).padStart(2, '0')}</span></td>
+            <td>
+                <div class="user-cell">
+                    <div class="user-avatar" style="${avatarBg(u.rank)}">${u.initials}</div>
+                    ${u.is_me
+                        ? `<strong style="color:var(--secondary);">${u.username}</strong><span class="you-tag">YOU</span>`
+                        : `<a class="user-link" href="/profile/${u.username}">${u.username}</a>`}
+                </div>
+            </td>
+            <td><span class="pts-cell">${u.points.toLocaleString()}</span></td>
+            <td><span class="rank-pill">${getRankEmoji(u.rank_label)} ${u.rank_label}</span></td>
+            <td class="td-badges">
+                <div class="badge-list">
+                    ${u.badges.map(b => `<div class="badge" style="background:${b.color}22;color:${b.color};" title="${b.label}">${b.emoji}</div>`).join('')}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+document.getElementById('logoutBtn').addEventListener('click', async e => {
+    e.preventDefault();
+    await api('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+});
+
+load();
+</script>
+</body>
+</html>

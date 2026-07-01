@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile — CTFCreator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-color: #000000;
+            --primary: #CF0F47;
+            --secondary: #FF0B55;
+            --text-main: #FFDEDE;
+            --card-bg: #1a1a1a;
+            --card-border: #2a2a2a;
+            --muted: #9e7070;
+            --label: #cca8a8;
+            --sidebar-w: 240px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-color); color: var(--text-main); font-family: 'Rajdhani', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+        body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(207,15,71,.03) 1px,transparent 1px), linear-gradient(90deg,rgba(207,15,71,.03) 1px,transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
+
+        /* ── TOPBAR ── */
+        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 0 28px; height: 60px; border-bottom: 1px solid #1f1f1f; position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,.92); backdrop-filter: blur(10px); }
+        .logo { font-size: 1.35rem; font-weight: 700; letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; text-decoration: none; color: var(--text-main); }
+        .logo span { color: var(--secondary); }
+        .topbar-right { display: flex; align-items: center; gap: 18px; }
+        .topbar-icon { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #2a2a2a; background: #111; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color .2s, box-shadow .2s; font-size: 1rem; }
+        .topbar-icon:hover { border-color: var(--primary); box-shadow: 0 0 10px rgba(207,15,71,.25); }
+        .profile-wrap { position: relative; }
+        .profile-btn { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 12px 6px 6px; border: 1px solid #2a2a2a; border-radius: 30px; background: #111; transition: border-color .2s, box-shadow .2s; }
+        .profile-btn:hover { border-color: var(--primary); box-shadow: 0 0 10px rgba(207,15,71,.2); }
+        .nav-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #6b0025); display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; font-family: 'Share Tech Mono', monospace; color: white; }
+        .profile-name-nav { font-size: .85rem; font-weight: 600; letter-spacing: .5px; color: var(--label); }
+        .profile-arrow { font-size: .65rem; color: var(--muted); transition: transform .2s; }
+        .profile-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 0; z-index: 200; box-shadow: 0 12px 40px rgba(0,0,0,.6); }
+        .profile-wrap:hover .profile-dropdown { display: block; }
+        .profile-wrap:hover .profile-arrow { transform: rotate(180deg); }
+        .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: .88rem; font-weight: 600; color: var(--label); cursor: pointer; letter-spacing: .5px; transition: background .15s, color .15s; text-decoration: none; }
+        .dropdown-item:hover { background: #222; color: var(--text-main); }
+        .dropdown-item.danger { color: #ff4a6e; }
+        .dropdown-item.danger:hover { background: rgba(255,74,110,.08); }
+        .dropdown-divider { height: 1px; background: #2a2a2a; margin: 6px 0; }
+
+        /* ── LAYOUT ── */
+        .layout { display: flex; flex: 1; position: relative; z-index: 1; }
+        .sidebar { width: var(--sidebar-w); min-height: calc(100vh - 60px); border-right: 1px solid #1a1a1a; padding: 28px 0; position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto; flex-shrink: 0; }
+        .sidebar-section { margin-bottom: 32px; }
+        .sidebar-label { font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: #4a2a2a; letter-spacing: 3px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; }
+        .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 10px 20px; font-size: .9rem; font-weight: 600; color: var(--muted); letter-spacing: .5px; transition: color .2s, background .2s; border-left: 2px solid transparent; text-decoration: none; }
+        .sidebar-link:hover { color: var(--text-main); background: rgba(207,15,71,.04); }
+        .sidebar-link.active { color: var(--secondary); border-left-color: var(--secondary); background: rgba(255,11,85,.06); }
+        .sidebar-icon { font-size: 1rem; width: 18px; text-align: center; }
+        .new-badge { background: var(--secondary); color: white; font-size: .6rem; font-family: 'Share Tech Mono', monospace; padding: 2px 6px; border-radius: 3px; letter-spacing: 1px; text-transform: uppercase; margin-left: 8px; }
+
+        /* ── MAIN ── */
+        .main { flex: 1; padding: 36px 40px; overflow-x: hidden; max-width: 960px; }
+
+        /* ── BACK LINK ── */
+        .back-link { display: inline-flex; align-items: center; gap: 8px; font-family: 'Share Tech Mono', monospace; font-size: .7rem; color: var(--muted); text-decoration: none; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 28px; transition: color .2s; }
+        .back-link:hover { color: var(--secondary); }
+
+        /* ── PROFILE HERO ── */
+        .profile-hero { background: linear-gradient(135deg, #1a0a10, #1a1a1a); border: 1px solid var(--card-border); border-left: 3px solid var(--secondary); border-radius: 0 10px 10px 0; padding: 32px 36px; display: flex; align-items: center; gap: 28px; margin-bottom: 28px; position: relative; overflow: hidden; }
+        .profile-hero::after { content: attr(data-username); font-family: 'Share Tech Mono', monospace; font-size: 5rem; color: rgba(207,15,71,.04); position: absolute; right: 24px; top: 50%; transform: translateY(-50%); letter-spacing: 4px; pointer-events: none; white-space: nowrap; }
+        .hero-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #6b0025); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; font-family: 'Share Tech Mono', monospace; color: white; flex-shrink: 0; border: 2px solid rgba(207,15,71,.4); box-shadow: 0 0 24px rgba(207,15,71,.2); }
+        .hero-info { flex: 1; }
+        .hero-tag { font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: var(--secondary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; }
+        .hero-username { font-size: 2rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; }
+        .hero-meta { display: flex; flex-wrap: wrap; gap: 16px; }
+        .hero-meta-item { font-family: 'Share Tech Mono', monospace; font-size: .72rem; color: var(--muted); letter-spacing: 1px; }
+        .hero-meta-item span { color: var(--label); }
+        .hero-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; flex-shrink: 0; }
+        .rank-badge-hero { background: rgba(207,15,71,.12); border: 1px solid rgba(207,15,71,.3); padding: 8px 18px; border-radius: 4px; font-family: 'Share Tech Mono', monospace; font-size: .75rem; color: var(--secondary); letter-spacing: 2px; text-align: center; }
+        .me-badge { background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.2); padding: 5px 14px; border-radius: 20px; font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: #4ade80; letter-spacing: 2px; }
+
+        /* ── RANK PROGRESS ── */
+        .rank-progress-card { background: var(--card-bg); border: 1px solid var(--card-border); border-top: 2px solid var(--primary); border-radius: 0 0 8px 8px; padding: 20px 24px; margin-bottom: 24px; }
+        .rp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .rp-cur { font-family: 'Share Tech Mono', monospace; font-size: .72rem; color: var(--secondary); letter-spacing: 2px; text-transform: uppercase; }
+        .rp-next { font-family: 'Share Tech Mono', monospace; font-size: .68rem; color: #4a4a4a; letter-spacing: 1px; }
+        .rp-bar-bg { width: 100%; height: 6px; background: #2a2a2a; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+        .rp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 3px; transition: width .8s ease; }
+        .rp-pts { font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: #4a4a4a; letter-spacing: 1px; text-align: right; }
+
+        /* ── STATS GRID ── */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--card-bg); border: 1px solid var(--card-border); border-top: 2px solid var(--primary); border-radius: 0 0 8px 8px; padding: 18px 20px; text-align: center; }
+        .stat-val { font-family: 'Share Tech Mono', monospace; font-size: 1.8rem; color: var(--secondary); font-weight: 700; line-height: 1; margin-bottom: 4px; }
+        .stat-lbl { font-size: .78rem; color: var(--muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* ── TWO-COL LOWER ── */
+        .lower-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        /* ── SECTION CARD ── */
+        .section-card { background: var(--card-bg); border: 1px solid var(--card-border); border-top: 2px solid var(--primary); border-radius: 0 0 10px 10px; overflow: hidden; }
+        .section-card-header { padding: 16px 20px; border-bottom: 1px solid #1f1f1f; }
+        .section-card-title { font-family: 'Share Tech Mono', monospace; font-size: .68rem; color: #4a2a2a; letter-spacing: 3px; text-transform: uppercase; }
+        .section-card-body { padding: 16px 20px; }
+
+        /* ── ACHIEVEMENTS ── */
+        .achieve-count { font-family: 'Share Tech Mono', monospace; font-size: .62rem; color: var(--secondary); letter-spacing: 1px; margin-left: auto; }
+        .achieve-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 14px; }
+        .achieve-card { background: #0d0d0d; border: 1px solid #1f1f1f; border-radius: 8px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; transition: border-color .2s, transform .2s; }
+        .achieve-card.unlocked { border-color: rgba(251,191,36,.35); background: linear-gradient(135deg,#1a1400,#0d0d0d); }
+        .achieve-card.unlocked:hover { border-color: rgba(251,191,36,.6); transform: translateY(-2px); }
+        .achieve-card.locked { opacity: .35; filter: grayscale(1); }
+        .achieve-emoji { font-size: 1.6rem; line-height: 1; }
+        .achieve-name { font-size: .78rem; font-weight: 700; color: var(--text-main); letter-spacing: .3px; line-height: 1.2; }
+        .achieve-desc { font-size: .65rem; color: var(--muted); font-family: 'Share Tech Mono', monospace; line-height: 1.4; }
+        .achieve-date { font-size: .58rem; color: #fbbf24; font-family: 'Share Tech Mono', monospace; margin-top: 2px; }
+        .no-badges { font-family: 'Share Tech Mono', monospace; font-size: .7rem; color: #4a2a2a; letter-spacing: 2px; padding: 16px 0; }
+
+        /* ── CATEGORY BREAKDOWN ── */
+        .cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .cat-row:last-child { margin-bottom: 0; }
+        .cat-name { font-size: .82rem; font-weight: 600; color: var(--label); width: 130px; flex-shrink: 0; }
+        .cat-bar-bg { flex: 1; height: 5px; background: #2a2a2a; border-radius: 3px; overflow: hidden; }
+        .cat-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 3px; }
+        .cat-count { font-family: 'Share Tech Mono', monospace; font-size: .7rem; color: var(--secondary); width: 24px; text-align: right; flex-shrink: 0; }
+
+        /* ── ACTIVITY ── */
+        .activity-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #161616; }
+        .activity-item:last-child { border-bottom: none; }
+        .act-icon { width: 30px; height: 30px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: .85rem; flex-shrink: 0; margin-top: 1px; }
+        .act-title { font-size: .88rem; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
+        .act-meta { font-size: .76rem; color: var(--muted); font-weight: 500; }
+        .act-meta span { font-family: 'Share Tech Mono', monospace; color: #4a4a4a; font-size: .68rem; }
+        .act-delta { margin-left: auto; font-family: 'Share Tech Mono', monospace; font-size: .78rem; color: #4ade80; flex-shrink: 0; padding-top: 2px; }
+
+        /* ── EMPTY ── */
+        .empty-inline { font-family: 'Share Tech Mono', monospace; font-size: .7rem; color: #4a2a2a; letter-spacing: 2px; padding: 16px 0; }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        .fade-in { animation: fadeUp .4s ease both; }
+        .d1 { animation-delay: .05s; }
+        .d2 { animation-delay: .1s; }
+        .d3 { animation-delay: .15s; }
+        .d4 { animation-delay: .2s; }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0d0d0d; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        @media (max-width: 900px) {
+            .lower-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(3,1fr); }
+        }
+        @media (max-width: 780px) {
+            .sidebar { display: none; }
+            .main { padding: 24px 18px; }
+            .profile-hero { flex-direction: column; text-align: center; }
+            .hero-right { align-items: center; }
+            .profile-hero::after { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+    <a href="/" class="logo">CTF<span>Creator</span></a>
+    <div class="topbar-right">
+        <div class="topbar-icon">🔔</div>
+        <div class="topbar-icon">⌨️</div>
+        <div class="profile-wrap">
+            <div class="profile-btn">
+                <div class="nav-avatar" id="navInitials">--</div>
+                <span class="profile-name-nav" id="navUsername">Loading…</span>
+                <span class="profile-arrow">▼</span>
+            </div>
+            <div class="profile-dropdown">
+                <a class="dropdown-item" href="#">👤 &nbsp;View Profile</a>
+                <a class="dropdown-item" href="/settings">⚙️ &nbsp;Settings</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item danger" id="logoutBtn" href="#">⏻ &nbsp;Logout</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Navigate</div>
+            <a class="sidebar-link" href="/dashboard"><span class="sidebar-icon">⬛</span> Dashboard</a>
+            <a class="sidebar-link" href="/dashboard#gen"><span class="sidebar-icon">⚡</span> Challenge Generator</a>
+            <a class="sidebar-link" href="/dashboard#solver"><span class="sidebar-icon">🤖</span> Solver Bot <span class="new-badge">AI</span></a>
+            <a class="sidebar-link" href="/dashboard#workspace"><span class="sidebar-icon">🎯</span> Workspace</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Compete</div>
+            <a class="sidebar-link active" href="/leaderboard"><span class="sidebar-icon">🏆</span> Leaderboard</a>
+            <a class="sidebar-link" href="/challenges"><span class="sidebar-icon">🔍</span> Browse Challenges</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Account</div>
+            <a class="sidebar-link" href="/dashboard#activity"><span class="sidebar-icon">📋</span> Activity Log</a>
+            <a class="sidebar-link" href="/settings"><span class="sidebar-icon">⚙️</span> Settings</a>
+        </div>
+    </aside>
+
+    <main class="main">
+        <a class="back-link" href="/leaderboard">← Back to Leaderboard</a>
+
+        <!-- HERO -->
+        <div class="profile-hero fade-in" id="profileHero" data-username="">
+            <div class="hero-avatar" id="heroAvatar">--</div>
+            <div class="hero-info">
+                <div class="hero-tag">// Operator Profile</div>
+                <div class="hero-username" id="heroUsername">Loading…</div>
+                <div class="hero-meta">
+                    <div class="hero-meta-item">Member since <span id="heroSince">—</span></div>
+                    <div class="hero-meta-item">Last seen <span id="heroLastSeen">—</span></div>
+                </div>
+            </div>
+            <div class="hero-right">
+                <div class="rank-badge-hero" id="heroRankBadge">RANK #—</div>
+                <div id="meBadge" class="me-badge" style="display:none;">✦ This is you</div>
+            </div>
+        </div>
+
+        <!-- RANK PROGRESS -->
+        <div class="rank-progress-card fade-in d1" id="rankProgressCard">
+            <div class="rp-header">
+                <span class="rp-cur" id="rpCur">—</span>
+                <span class="rp-next" id="rpNext">—</span>
+            </div>
+            <div class="rp-bar-bg"><div class="rp-bar-fill" id="rpFill" style="width:0%"></div></div>
+            <div class="rp-pts" id="rpPts"></div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-grid fade-in d2">
+            <div class="stat-card">
+                <div class="stat-val" id="statPoints">—</div>
+                <div class="stat-lbl">Total Points</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" id="statSolved">—</div>
+                <div class="stat-lbl">Flags Captured</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" id="statRank">—</div>
+                <div class="stat-lbl">Global Rank</div>
+            </div>
+        </div>
+
+        <!-- ACHIEVEMENTS (full width) -->
+        <div class="section-card fade-in d3" style="margin-bottom:20px;">
+            <div class="section-card-header" style="display:flex;align-items:center;">
+                <div class="section-card-title">// Achievements</div>
+                <span class="achieve-count" id="achieveCount"></span>
+            </div>
+            <div class="section-card-body">
+                <div class="achieve-grid" id="achieveGrid">
+                    <div class="no-badges">Loading…</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOWER: category breakdown | activity -->
+        <div class="lower-grid fade-in d4">
+
+            <!-- LEFT COL: category breakdown -->
+            <div style="display:flex;flex-direction:column;gap:20px;">
+
+                <div class="section-card">
+                    <div class="section-card-header"><div class="section-card-title">// Category Breakdown</div></div>
+                    <div class="section-card-body" id="catBreakdown">
+                        <div class="no-badges">No solves yet.</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COL: recent activity -->
+            <div class="section-card fade-in d4">
+                <div class="section-card-header"><div class="section-card-title">// Recent Activity</div></div>
+                <div class="section-card-body" id="activityList">
+                    <div class="no-badges">No activity yet.</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+async function api(path, opts = {}) {
+    const res = await fetch(path, { headers: {'Content-Type':'application/json'}, ...opts });
+    if (res.status === 401) { window.location.href = '/login'; return null; }
+    return res.json();
+}
+
+function getRankEmoji(label) {
+    return {'Script Kiddie':'👶','CTF Player':'🎮','Hacker':'💻','Exploiter':'🔓','The Ghost':'💀'}[label] || '🎮';
+}
+
+const actColors = {
+    solved:    { bg: 'rgba(74,222,128,.08)',  color: '#4ade80', icon: '✅' },
+    created:   { bg: 'rgba(99,179,237,.08)',  color: '#63b3ed', icon: '⚡' },
+    analyzed:  { bg: 'rgba(167,139,250,.08)', color: '#a78bfa', icon: '🤖' },
+    attempted: { bg: 'rgba(248,113,113,.08)', color: '#f87171', icon: '✗'  },
+};
+
+const CAT_COLORS = {
+    'Web Exploitation':   '#63b3ed',
+    'Cryptography':       '#a78bfa',
+    'Digital Forensics':  '#4ade80',
+    'Reverse Engineering':'#ffd47c',
+    'Binary Pwn':         '#f87171',
+};
+
+// Mirror of ACHIEVEMENTS defined in app.py — used to show locked achievements too
+const ALL_ACHIEVEMENTS = [
+    { key:"first_blood",     name:"First Blood",      description:"Solved your very first challenge.",                    emoji:"🩸" },
+    { key:"ctf_addict",      name:"CTF Addict",        description:"Solved 5 challenges.",                                 emoji:"💉" },
+    { key:"flag_hunter",     name:"Flag Hunter",       description:"Solved 10 challenges.",                                emoji:"🚩" },
+    { key:"unstoppable",     name:"Unstoppable",       description:"Solved 25 challenges.",                               emoji:"⚡" },
+    { key:"web_master",      name:"Web Master",        description:"Solved all Web Exploitation challenges.",              emoji:"🌐" },
+    { key:"crypto_master",   name:"Crypto Master",     description:"Solved all Cryptography challenges.",                  emoji:"🔐" },
+    { key:"forensics_master",name:"Forensics Master",  description:"Solved all Digital Forensics challenges.",             emoji:"🔍" },
+    { key:"rev_master",      name:"Reverse Engineer",  description:"Solved all Reverse Engineering challenges.",           emoji:"⚙️" },
+    { key:"pwn_master",      name:"Pwn Master",        description:"Solved all Binary Pwn challenges.",                   emoji:"💥" },
+    { key:"point_century",   name:"Century",           description:"Reached 100 points.",                                 emoji:"💯" },
+    { key:"point_millionaire",name:"Point Millionaire",description:"Reached 1,000 points.",                               emoji:"💰" },
+    { key:"high_roller",     name:"High Roller",       description:"Reached 5,000 points.",                               emoji:"🎰" },
+    { key:"speedrunner",     name:"Speedrunner",       description:"Solved a challenge within 10 minutes of signing up.", emoji:"⏱️" },
+    { key:"ai_pioneer",      name:"AI Pioneer",        description:"Used the AI Challenge Generator for the first time.", emoji:"🤖" },
+];
+
+async function load() {
+    // get username from URL path: /profile/<username>
+    const username = window.location.pathname.split('/').pop();
+
+    const [navData, profile] = await Promise.all([
+        api('/api/dashboard'),
+        api(`/api/user/${username}/profile`),
+    ]);
+
+    if (!navData || !profile) return;
+
+    // nav
+    document.getElementById('navInitials').textContent = navData.initials;
+    document.getElementById('navUsername').textContent  = navData.username;
+
+    // dropdown links
+    document.querySelector('.profile-dropdown .dropdown-item[href="#"]').href =
+        `/profile/${navData.username}`;
+
+    // hero
+    const hero = document.getElementById('profileHero');
+    hero.setAttribute('data-username', profile.username);
+    document.getElementById('heroAvatar').textContent    = profile.initials;
+    document.getElementById('heroUsername').textContent  = profile.username;
+    document.getElementById('heroSince').textContent     = profile.member_since;
+    document.getElementById('heroLastSeen').textContent  = profile.last_seen;
+    document.getElementById('heroRankBadge').textContent =
+        `${getRankEmoji(profile.rank_label)} ${profile.rank_label} · RANK #${profile.global_rank}`;
+    if (profile.is_me) document.getElementById('meBadge').style.display = '';
+
+    // rank progress
+    const rp = profile.rank_progress;
+    document.getElementById('rpCur').textContent   = `${getRankEmoji(rp.current)} ${rp.current}`;
+    document.getElementById('rpFill').style.width  = rp.progress_pct + '%';
+    if (rp.next) {
+        document.getElementById('rpNext').textContent = `Next: ${rp.next}`;
+        document.getElementById('rpPts').textContent  = `${rp.points_needed} pts to ${rp.next}`;
+    } else {
+        document.getElementById('rpNext').textContent = '★ Max Rank';
+        document.getElementById('rpPts').textContent  = 'Top rank achieved';
+    }
+
+    // stats
+    document.getElementById('statPoints').textContent = profile.points.toLocaleString();
+    document.getElementById('statSolved').textContent = profile.solve_count;
+    document.getElementById('statRank').textContent   = `#${profile.global_rank}`;
+
+    // achievements
+    const grid    = document.getElementById('achieveGrid');
+    const earned  = profile.achievements;
+    const earnedKeys = new Set(earned.map(a => a.key));
+    document.getElementById('achieveCount').textContent =
+        `${earned.length} / ${ALL_ACHIEVEMENTS.length} unlocked`;
+
+    grid.innerHTML = ALL_ACHIEVEMENTS.map(a => {
+        const match   = earned.find(e => e.key === a.key);
+        const unlocked = !!match;
+        return `
+            <div class="achieve-card ${unlocked ? 'unlocked' : 'locked'}" title="${a.description}">
+                <div class="achieve-emoji">${a.emoji}</div>
+                <div class="achieve-name">${a.name}</div>
+                <div class="achieve-desc">${a.description}</div>
+                ${unlocked
+                    ? `<div class="achieve-date">✓ ${match.unlocked_at || ''}</div>`
+                    : `<div class="achieve-date" style="color:#3a3a3a;">// locked</div>`}
+            </div>`;
+    }).join('');
+
+    // category breakdown
+    const catEl = document.getElementById('catBreakdown');
+    const cats  = profile.cat_breakdown;
+    const keys  = Object.keys(cats);
+    if (keys.length) {
+        const max = Math.max(...Object.values(cats));
+        catEl.innerHTML = keys.map(k => `
+            <div class="cat-row">
+                <div class="cat-name">${k}</div>
+                <div class="cat-bar-bg">
+                    <div class="cat-bar-fill" style="width:${Math.round(cats[k]/max*100)}%;background:${CAT_COLORS[k] || 'var(--secondary)'}44;"></div>
+                </div>
+                <div class="cat-count" style="color:${CAT_COLORS[k] || 'var(--secondary)'};">${cats[k]}</div>
+            </div>`).join('');
+    } else {
+        catEl.innerHTML = '<div class="no-badges">No solves yet.</div>';
+    }
+
+    // activity
+    const actEl = document.getElementById('activityList');
+    if (profile.activity.length) {
+        actEl.innerHTML = profile.activity.map(a => {
+            const ic = actColors[a.kind] || actColors.attempted;
+            const delta = a.delta > 0 ? `<div class="act-delta">+${a.delta}</div>` :
+                          a.label      ? `<div class="act-delta" style="color:${ic.color};">${a.label}</div>` : '';
+            return `
+                <div class="activity-item">
+                    <div class="act-icon" style="background:${ic.bg};color:${ic.color};">${ic.icon}</div>
+                    <div>
+                        <div class="act-title">${a.title}</div>
+                        <div class="act-meta">${a.category} · ${a.difficulty} <span>· ${a.time_ago}</span></div>
+                    </div>
+                    ${delta}
+                </div>`;
+        }).join('');
+    } else {
+        actEl.innerHTML = '<div class="no-badges">No activity recorded yet.</div>';
+    }
+
+    // update page title
+    document.title = `${profile.username} — CTFCreator`;
+}
+
+document.getElementById('logoutBtn').addEventListener('click', async e => {
+    e.preventDefault();
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+});
+
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — CTFCreator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+        :root { --bg:#000;--primary:#CF0F47;--secondary:#FF0B55;--text-main:#FFDEDE;--card-bg:#1a1a1a;--card-border:#2a2a2a;--muted:#9e7070; }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:var(--bg);color:var(--text-main);font-family:'Rajdhani',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+        body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(207,15,71,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(207,15,71,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+        .box{background:var(--card-bg);border:1px solid var(--card-border);border-top:2px solid var(--primary);border-radius:0 0 12px 12px;padding:40px 36px;width:100%;max-width:400px;position:relative;z-index:1;}
+        .logo{font-family:'Share Tech Mono',monospace;font-size:1.4rem;font-weight:700;letter-spacing:2px;text-align:center;margin-bottom:28px;}
+        .logo span{color:var(--secondary);}
+        .label{display:block;font-family:'Share Tech Mono',monospace;font-size:.7rem;color:#cca8a8;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+        .field{width:100%;background:#0d0d0d;border:1px solid #2a2a2a;color:var(--text-main);padding:12px 14px;font-size:.95rem;font-family:'Share Tech Mono',monospace;border-radius:5px;outline:none;transition:border-color .2s,box-shadow .2s;margin-bottom:16px;}
+        .field:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(207,15,71,.1);}
+        .btn{width:100%;background:var(--secondary);color:#fff;border:none;padding:13px;font-family:'Rajdhani',sans-serif;font-size:.92rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;border-radius:5px;cursor:pointer;transition:box-shadow .2s;box-shadow:0 0 16px rgba(255,11,85,.3);}
+        .btn:hover{box-shadow:0 0 28px rgba(255,11,85,.55);}
+        .err{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;font-family:'Share Tech Mono',monospace;font-size:.8rem;padding:10px 14px;border-radius:5px;margin-bottom:14px;display:none;}
+        .err.show{display:block;}
+        .sub{font-size:.8rem;color:var(--muted);text-align:center;margin-top:18px;}
+        .sub a{color:var(--secondary);text-decoration:none;}
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div class="logo">CTF<span>Creator</span></div>
+        <div class="err" id="err"></div>
+        <label class="label">Username</label>
+        <input class="field" id="username" type="text" placeholder="xOr_H4ck3r" autocomplete="username">
+        <label class="label">Password</label>
+        <input class="field" id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+        <button class="btn" id="loginBtn">⚡ Access System</button>
+        <div class="sub">No account? <a href="/signup" id="registerLink">Register here</a></div>
+    </div>
+
+    <script>
+        async function doLogin() {
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value;
+            const err = document.getElementById('err');
+            err.classList.remove('show');
+            if (!u || !p) { err.textContent = 'Enter username and password.'; err.classList.add('show'); return; }
+            const res = await fetch('/api/auth/login', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({username:u, password:p})
+            });
+            const data = await res.json();
+            if (data.ok) {
+                window.location.href = (data.role === 'challenge_creator') ? '/admin' : '/dashboard';
+            }
+            else { err.textContent = data.error || 'Login failed.'; err.classList.add('show'); }
+        }
+
+        document.getElementById('loginBtn').addEventListener('click', doLogin);
+        document.getElementById('password').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+        document.getElementById('registerLink').addEventListener('click', e => {
+            e.preventDefault();
+            window.location.href = '/signup';
+        });
+    </script>
+</body>
+</html>

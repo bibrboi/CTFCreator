@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings — CTFCreator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+        :root { --bg:#000;--primary:#CF0F47;--secondary:#FF0B55;--text-main:#FFDEDE;--card-bg:#1a1a1a;--card-border:#2a2a2a;--muted:#9e7070;--label:#cca8a8;--sidebar-w:240px; }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:var(--bg);color:var(--text-main);font-family:'Rajdhani',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+        body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(207,15,71,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(207,15,71,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+        /* TOPBAR */
+        .topbar{display:flex;justify-content:space-between;align-items:center;padding:0 28px;height:60px;border-bottom:1px solid #1f1f1f;position:sticky;top:0;z-index:100;background:rgba(0,0,0,.92);backdrop-filter:blur(10px);}
+        .logo{font-size:1.35rem;font-weight:700;letter-spacing:2px;font-family:'Share Tech Mono',monospace;text-decoration:none;color:var(--text-main);}
+        .logo span{color:var(--secondary);}
+        .topbar-right{display:flex;align-items:center;gap:18px;}
+        .profile-wrap{position:relative;}
+        .profile-btn{display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 12px 6px 6px;border:1px solid #2a2a2a;border-radius:30px;background:#111;transition:border-color .2s;}
+        .profile-btn:hover{border-color:var(--primary);}
+        .profile-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#6b0025);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;font-family:'Share Tech Mono',monospace;color:white;}
+        .profile-name{font-size:.85rem;font-weight:600;letter-spacing:.5px;color:var(--label);}
+        .profile-arrow{font-size:.65rem;color:var(--muted);transition:transform .2s;}
+        .profile-dropdown{display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:180px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:8px 0;z-index:200;box-shadow:0 12px 40px rgba(0,0,0,.6);}
+        .profile-wrap:hover .profile-dropdown{display:block;}
+        .profile-wrap:hover .profile-arrow{transform:rotate(180deg);}
+        .profile-dropdown::before{content:'';position:absolute;top:-10px;left:0;right:0;height:10px;}
+        .dropdown-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:.88rem;font-weight:600;color:var(--label);cursor:pointer;letter-spacing:.5px;transition:background .15s,color .15s;text-decoration:none;}
+        .dropdown-item:hover{background:#222;color:var(--text-main);}
+        .dropdown-item.danger{color:#ff4a6e;}
+        .dropdown-item.danger:hover{background:rgba(255,74,110,.08);}
+        .dropdown-divider{height:1px;background:#2a2a2a;margin:6px 0;}
+
+        /* LAYOUT */
+        .layout{display:flex;flex:1;position:relative;z-index:1;}
+        .sidebar{width:var(--sidebar-w);min-height:calc(100vh - 60px);border-right:1px solid #1a1a1a;padding:28px 0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;flex-shrink:0;}
+        .sidebar-section{margin-bottom:32px;}
+        .sidebar-label{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:#4a2a2a;letter-spacing:3px;text-transform:uppercase;padding:0 20px;margin-bottom:8px;}
+        .sidebar-link{display:flex;align-items:center;gap:12px;padding:10px 20px;font-size:.9rem;font-weight:600;color:var(--muted);cursor:pointer;letter-spacing:.5px;transition:color .2s,background .2s;border-left:2px solid transparent;text-decoration:none;}
+        .sidebar-link:hover{color:var(--text-main);background:rgba(207,15,71,.04);}
+        .sidebar-link.active{color:var(--secondary);border-left-color:var(--secondary);background:rgba(255,11,85,.06);}
+        .sidebar-icon{font-size:1rem;width:18px;text-align:center;}
+
+        /* MAIN */
+        .main{flex:1;padding:36px 40px;overflow-x:hidden;max-width:800px;}
+        .page-tag{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--secondary);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;display:block;}
+        .page-title{font-size:2rem;font-weight:700;letter-spacing:1px;margin-bottom:4px;}
+        .page-subtitle{font-size:.92rem;color:var(--muted);font-weight:500;margin-bottom:36px;}
+
+        /* CARDS */
+        .settings-card{background:var(--card-bg);border:1px solid var(--card-border);border-top:2px solid var(--primary);border-radius:0 0 10px 10px;padding:28px;margin-bottom:28px;}
+        .card-heading{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--secondary);letter-spacing:3px;text-transform:uppercase;margin-bottom:18px;}
+
+        /* FORM */
+        .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+        .form-group{margin-bottom:18px;}
+        .form-label{display:block;font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--label);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+        .form-input{width:100%;background:#0d0d0d;border:1px solid #2a2a2a;color:var(--text-main);padding:11px 14px;font-size:.9rem;font-family:'Rajdhani',sans-serif;font-weight:500;border-radius:5px;outline:none;transition:border-color .2s,box-shadow .2s;}
+        .form-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(207,15,71,.1);}
+        .form-input:disabled{opacity:.4;cursor:not-allowed;}
+        .form-hint{font-size:.72rem;color:#4a4a4a;font-family:'Share Tech Mono',monospace;margin-top:5px;}
+
+        /* BUTTONS */
+        .btn-primary{background:var(--primary);color:white;border:none;padding:10px 24px;border-radius:5px;font-size:.85rem;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:background .2s,box-shadow .2s;}
+        .btn-primary:hover{background:var(--secondary);box-shadow:0 0 16px rgba(255,11,85,.35);}
+        .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+
+        /* ALERT */
+        .alert{padding:10px 14px;border-radius:5px;font-family:'Share Tech Mono',monospace;font-size:.78rem;margin-bottom:16px;display:none;letter-spacing:.5px;}
+        .alert.show{display:block;}
+        .alert.error{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;}
+        .alert.success{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);color:#4ade80;}
+
+        /* ACHIEVEMENTS GRID */
+        .achieve-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+        .achieve-card{background:#0d0d0d;border:1px solid #1f1f1f;border-radius:8px;padding:16px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;transition:border-color .2s;}
+        .achieve-card.unlocked{border-color:rgba(251,191,36,.3);background:linear-gradient(135deg,#1a1500,#0d0d0d);}
+        .achieve-card.locked{opacity:.4;filter:grayscale(1);}
+        .achieve-emoji{font-size:2rem;line-height:1;}
+        .achieve-name{font-size:.88rem;font-weight:700;letter-spacing:.5px;color:var(--text-main);}
+        .achieve-desc{font-size:.72rem;color:var(--muted);font-family:'Share Tech Mono',monospace;line-height:1.5;}
+        .achieve-date{font-size:.62rem;color:#fbbf24;font-family:'Share Tech Mono',monospace;margin-top:4px;}
+        .achieve-locked-label{font-size:.62rem;color:#3a3a3a;font-family:'Share Tech Mono',monospace;margin-top:4px;}
+        .achieve-progress{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--secondary);margin-bottom:8px;}
+
+        ::-webkit-scrollbar{width:5px;}
+        ::-webkit-scrollbar-track{background:#0d0d0d;}
+        ::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px;}
+        ::-webkit-scrollbar-thumb:hover{background:var(--primary);}
+        @media(max-width:700px){.sidebar{display:none;}.main{padding:20px 16px;}.form-row-2{grid-template-columns:1fr;}}
+    </style>
+</head>
+<body>
+
+<nav class="topbar">
+    <a href="/dashboard" class="logo">CTF<span>Creator</span></a>
+    <div class="topbar-right">
+        <div class="profile-wrap">
+            <div class="profile-btn">
+                <div class="profile-avatar" id="navInitials">--</div>
+                <span class="profile-name" id="navUsername">Loading…</span>
+                <span class="profile-arrow">▼</span>
+            </div>
+            <div class="profile-dropdown">
+                <a class="dropdown-item" href="#" id="dropViewProfile">👤 &nbsp;View Profile</a>
+                <a class="dropdown-item active" href="/settings">⚙️ &nbsp;Settings</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item danger" href="#" id="logoutBtn">⏻ &nbsp;Logout</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Navigate</div>
+            <a class="sidebar-link" href="/dashboard"><span class="sidebar-icon">⚡</span> Dashboard</a>
+            <a class="sidebar-link" href="/challenges"><span class="sidebar-icon">🔍</span> Browse Challenges</a>
+            <a class="sidebar-link" href="/leaderboard"><span class="sidebar-icon">🏆</span> Leaderboard</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Account</div>
+            <a class="sidebar-link active" href="/settings"><span class="sidebar-icon">⚙️</span> Settings</a>
+            <a class="sidebar-link" href="#" id="sidebarLogout"><span class="sidebar-icon">⏻</span> Logout</a>
+        </div>
+    </aside>
+
+    <main class="main">
+        <span class="page-tag">// Account</span>
+        <h1 class="page-title">Settings</h1>
+        <p class="page-subtitle">Manage your profile and account preferences.</p>
+
+        <!-- PROFILE SETTINGS -->
+        <div class="settings-card">
+            <div class="card-heading">// Profile Information</div>
+            <div class="alert error"   id="profileError"></div>
+            <div class="alert success" id="profileSuccess"></div>
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input class="form-input" id="fFirstName" type="text" placeholder="John" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input class="form-input" id="fLastName" type="text" placeholder="Doe" maxlength="50">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input class="form-input" id="fUsername" type="text" disabled>
+                <div class="form-hint">Username cannot be changed.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input class="form-input" id="fEmail" type="email" placeholder="you@example.com" maxlength="120">
+            </div>
+            <button class="btn-primary" id="saveProfileBtn">💾 Save Profile</button>
+        </div>
+
+        <!-- PASSWORD CHANGE -->
+        <div class="settings-card">
+            <div class="card-heading">// Change Password</div>
+            <div class="alert error"   id="passError"></div>
+            <div class="alert success" id="passSuccess"></div>
+            <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <input class="form-input" id="fCurPass" type="password" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <input class="form-input" id="fNewPass" type="password" placeholder="••••••••" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm New Password</label>
+                    <input class="form-input" id="fConfPass" type="password" placeholder="••••••••" autocomplete="new-password">
+                </div>
+            </div>
+            <div class="form-hint" style="margin-bottom:16px;">Minimum 8 characters.</div>
+            <button class="btn-primary" id="savePassBtn">🔒 Update Password</button>
+        </div>
+
+        <!-- ACHIEVEMENTS -->
+        <div class="settings-card">
+            <div class="card-heading">// Achievements</div>
+            <div class="achieve-progress" id="achieveProgress">Loading…</div>
+            <div class="achieve-grid" id="achieveGrid">
+                <div style="color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:.78rem;">Loading achievements…</div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+async function api(path, opts = {}) {
+    const defaults = opts.body ? { headers: { 'Content-Type': 'application/json' } } : {};
+    const res = await fetch(path, { ...defaults, ...opts });
+    if (res.status === 401) { window.location.href = '/login'; return null; }
+    return res.json();
+}
+
+function showAlert(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.add('show'); }
+function hideAlert(id)      { const el = document.getElementById(id); el.textContent = ''; el.classList.remove('show'); }
+
+// ── Boot ─────────────────────────────────────────────────────────────
+(async () => {
+    const me = await api('/api/user/settings');
+    if (!me) return;
+    document.getElementById('navInitials').textContent  = me.username.slice(0,2).toUpperCase();
+    document.getElementById('navUsername').textContent  = me.username;
+    document.getElementById('fUsername').value   = me.username;
+    document.getElementById('fFirstName').value  = me.first_name;
+    document.getElementById('fLastName').value   = me.last_name;
+    document.getElementById('fEmail').value      = me.email;
+    document.getElementById('dropViewProfile').href = `/profile/${me.username}`;
+    loadAchievements();
+})();
+
+// ── Save Profile ──────────────────────────────────────────────────────
+document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+    hideAlert('profileError'); hideAlert('profileSuccess');
+    const btn = document.getElementById('saveProfileBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    const data = await api('/api/user/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+            first_name: document.getElementById('fFirstName').value.trim(),
+            last_name:  document.getElementById('fLastName').value.trim(),
+            email:      document.getElementById('fEmail').value.trim(),
+        }),
+    });
+
+    btn.disabled = false; btn.textContent = '💾 Save Profile';
+    if (!data) return;
+    if (data.error)   showAlert('profileError',   data.error);
+    if (data.ok)      showAlert('profileSuccess', data.message || 'Profile saved.');
+});
+
+// ── Change Password ───────────────────────────────────────────────────
+document.getElementById('savePassBtn').addEventListener('click', async () => {
+    hideAlert('passError'); hideAlert('passSuccess');
+    const newPass  = document.getElementById('fNewPass').value;
+    const confPass = document.getElementById('fConfPass').value;
+
+    if (newPass !== confPass) { showAlert('passError', 'New passwords do not match.'); return; }
+
+    const btn = document.getElementById('savePassBtn');
+    btn.disabled = true; btn.textContent = 'Updating…';
+
+    const data = await api('/api/user/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+            cur_password: document.getElementById('fCurPass').value,
+            new_password: newPass,
+        }),
+    });
+
+    btn.disabled = false; btn.textContent = '🔒 Update Password';
+    if (!data) return;
+    if (data.error) showAlert('passError', data.error);
+    if (data.ok) {
+        showAlert('passSuccess', 'Password updated successfully.');
+        document.getElementById('fCurPass').value = '';
+        document.getElementById('fNewPass').value  = '';
+        document.getElementById('fConfPass').value = '';
+    }
+});
+
+// ── Achievements ──────────────────────────────────────────────────────
+async function loadAchievements() {
+    const data = await api('/api/user/achievements');
+    if (!data) return;
+
+    document.getElementById('achieveProgress').textContent =
+        `${data.earned} / ${data.total} unlocked`;
+
+    const grid = document.getElementById('achieveGrid');
+    grid.innerHTML = data.achievements.map(a => `
+        <div class="achieve-card ${a.unlocked ? 'unlocked' : 'locked'}">
+            <div class="achieve-emoji">${a.emoji}</div>
+            <div class="achieve-name">${escHtml(a.name)}</div>
+            <div class="achieve-desc">${escHtml(a.description)}</div>
+            ${a.unlocked
+                ? `<div class="achieve-date">✓ ${a.unlocked_at}</div>`
+                : `<div class="achieve-locked-label">// locked</div>`}
+        </div>
+    `).join('');
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Logout ────────────────────────────────────────────────────────────
+async function doLogout() {
+    await api('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+}
+document.getElementById('logoutBtn').addEventListener('click',    e => { e.preventDefault(); doLogout(); });
+document.getElementById('sidebarLogout').addEventListener('click', e => { e.preventDefault(); doLogout(); });
+</script>
+</body>
+</html>

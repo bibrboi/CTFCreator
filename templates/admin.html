@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel — CTFCreator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-color: #000000;
+            --primary: #CF0F47;
+            --secondary: #FF0B55;
+            --text-main: #FFDEDE;
+            --card-bg: #1a1a1a;
+            --card-border: #2a2a2a;
+            --muted: #9e7070;
+            --label: #cca8a8;
+            --sidebar-w: 240px;
+            --amber: #f59e0b;
+            --green: #4ade80;
+            --blue: #63b3ed;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-color); color: var(--text-main); font-family: 'Rajdhani', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+        body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(207,15,71,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(207,15,71,.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
+
+        /* ── TOPBAR ── */
+        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 0 28px; height: 60px; border-bottom: 1px solid #1f1f1f; position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); }
+        .logo { font-size: 1.35rem; font-weight: 700; letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; text-decoration: none; color: var(--text-main); }
+        .logo span { color: var(--secondary); }
+        .admin-badge { font-family: 'Share Tech Mono', monospace; font-size: .65rem; background: rgba(207,15,71,.15); border: 1px solid rgba(207,15,71,.3); color: var(--secondary); padding: 3px 10px; border-radius: 3px; letter-spacing: 2px; margin-left: 12px; vertical-align: middle; }
+        .topbar-right { display: flex; align-items: center; gap: 18px; }
+        .profile-wrap { position: relative; }
+        .profile-btn { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 12px 6px 6px; border: 1px solid #2a2a2a; border-radius: 30px; background: #111; transition: border-color .2s; }
+        .profile-btn:hover { border-color: var(--primary); }
+        .profile-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #6b0025); display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; font-family: 'Share Tech Mono', monospace; color: white; }
+        .profile-name { font-size: .85rem; font-weight: 600; letter-spacing: .5px; color: var(--label); }
+        .profile-arrow { font-size: .65rem; color: var(--muted); transition: transform .2s; }
+        .profile-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 0; z-index: 200; box-shadow: 0 12px 40px rgba(0,0,0,.6); }
+        .profile-wrap:hover .profile-dropdown { display: block; }
+        .profile-wrap:hover .profile-arrow { transform: rotate(180deg); }
+        .profile-dropdown::before { content: ''; position: absolute; top: -10px; left: 0; right: 0; height: 10px; }
+        .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: .88rem; font-weight: 600; color: var(--label); cursor: pointer; letter-spacing: .5px; transition: background .15s, color .15s; text-decoration: none; }
+        .dropdown-item:hover { background: #222; color: var(--text-main); }
+        .dropdown-item.danger { color: #ff4a6e; }
+        .dropdown-item.danger:hover { background: rgba(255,74,110,.08); }
+        .dropdown-divider { height: 1px; background: #2a2a2a; margin: 6px 0; }
+
+        /* ── LAYOUT ── */
+        .layout { display: flex; flex: 1; position: relative; z-index: 1; }
+        .sidebar { width: var(--sidebar-w); min-height: calc(100vh - 60px); border-right: 1px solid #1a1a1a; padding: 28px 0; position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto; flex-shrink: 0; }
+        .sidebar-section { margin-bottom: 32px; }
+        .sidebar-label { font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: #4a2a2a; letter-spacing: 3px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; }
+        .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 10px 20px; font-size: .9rem; font-weight: 600; color: var(--muted); cursor: pointer; letter-spacing: .5px; transition: color .2s, background .2s; border-left: 2px solid transparent; text-decoration: none; }
+        .sidebar-link:hover { color: var(--text-main); background: rgba(207,15,71,.04); }
+        .sidebar-link.active { color: var(--secondary); border-left-color: var(--secondary); background: rgba(255,11,85,.06); }
+        .sidebar-icon { font-size: 1rem; width: 18px; text-align: center; }
+
+        /* ── MAIN ── */
+        .main { flex: 1; padding: 36px 40px; overflow-x: hidden; }
+
+        /* ── STAT PILLS ── */
+        .stat-row { display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
+        .stat-pill { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px 22px; display: flex; flex-direction: column; gap: 4px; min-width: 140px; }
+        .stat-pill-val { font-family: 'Share Tech Mono', monospace; font-size: 1.6rem; color: var(--secondary); line-height: 1; }
+        .stat-pill-lbl { font-size: .75rem; color: var(--muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* ── SECTION HEADER ── */
+        .section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .section-tag { font-family: 'Share Tech Mono', monospace; font-size: .68rem; color: var(--secondary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .section-title { font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; }
+
+        /* ── BUTTONS ── */
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 22px; border-radius: 5px; font-size: .85rem; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background .2s, box-shadow .2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary:hover { background: var(--secondary); box-shadow: 0 0 16px rgba(255,11,85,.35); }
+        .btn-ghost { background: transparent; color: var(--label); border: 1px solid #333; padding: 8px 18px; border-radius: 5px; font-size: .82rem; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: border-color .2s, color .2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-ghost:hover { border-color: var(--text-main); color: var(--text-main); }
+        .btn-danger { background: transparent; color: #f87171; border: 1px solid rgba(248,113,113,.3); padding: 6px 14px; border-radius: 4px; font-size: .78rem; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: background .15s; }
+        .btn-danger:hover { background: rgba(248,113,113,.08); }
+        .btn-edit { background: transparent; color: var(--blue); border: 1px solid rgba(99,179,237,.3); padding: 6px 14px; border-radius: 4px; font-size: .78rem; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: background .15s; }
+        .btn-edit:hover { background: rgba(99,179,237,.08); }
+
+        /* ── CHALLENGE TABLE ── */
+        .table-card { background: var(--card-bg); border: 1px solid var(--card-border); border-top: 2px solid var(--primary); border-radius: 0 0 10px 10px; overflow: hidden; margin-bottom: 40px; }
+        .chall-table { width: 100%; border-collapse: collapse; }
+        .chall-table th { padding: 12px 18px; font-family: 'Share Tech Mono', monospace; font-size: .62rem; color: #4a2a2a; letter-spacing: 3px; text-transform: uppercase; text-align: left; border-bottom: 1px solid #222; }
+        .chall-table td { padding: 14px 18px; font-size: .88rem; font-weight: 600; color: var(--label); border-bottom: 1px solid #161616; vertical-align: middle; }
+        .chall-table tbody tr:last-child td { border-bottom: none; }
+        .chall-table tbody tr:hover td { background: rgba(207,15,71,.03); }
+        .chall-title-cell { color: var(--text-main); font-weight: 700; max-width: 220px; }
+        .chall-title-cell small { display: block; font-size: .72rem; color: var(--muted); font-weight: 500; margin-top: 2px; font-family: 'Share Tech Mono', monospace; letter-spacing: .5px; }
+        .cat-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-family: 'Share Tech Mono', monospace; font-size: .6rem; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+        .cat-web   { background: rgba(99,179,237,.1);  color: #63b3ed; border: 1px solid rgba(99,179,237,.2); }
+        .cat-crypto{ background: rgba(167,139,250,.1); color: #a78bfa; border: 1px solid rgba(167,139,250,.2); }
+        .cat-for   { background: rgba(74,222,128,.1);  color: #4ade80; border: 1px solid rgba(74,222,128,.2); }
+        .cat-rev   { background: rgba(251,191,36,.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,.2); }
+        .cat-pwn   { background: rgba(248,113,113,.1); color: #f87171; border: 1px solid rgba(248,113,113,.2); }
+        .diff-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-family: 'Share Tech Mono', monospace; font-size: .6rem; letter-spacing: 1px; }
+        .diff-basic{ background: rgba(74,222,128,.08); color: #4ade80; border: 1px solid rgba(74,222,128,.15); }
+        .diff-inter{ background: rgba(251,191,36,.08); color: #fbbf24; border: 1px solid rgba(251,191,36,.15); }
+        .diff-adv  { background: rgba(248,113,113,.08); color: #f87171; border: 1px solid rgba(248,113,113,.15); }
+        .pts-cell  { font-family: 'Share Tech Mono', monospace; color: var(--secondary); }
+        .solve-cell{ font-family: 'Share Tech Mono', monospace; color: var(--muted); font-size: .8rem; }
+        .action-cell { display: flex; gap: 8px; align-items: center; }
+        .empty-row { padding: 48px; text-align: center; color: var(--muted); font-family: 'Share Tech Mono', monospace; font-size: .8rem; }
+
+        /* ── MODAL OVERLAY ── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(4px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 24px; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #111; border: 1px solid #2a2a2a; border-top: 2px solid var(--primary); border-radius: 0 0 12px 12px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; position: relative; animation: slideUp .25s ease both; }
+        @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 28px 18px; border-bottom: 1px solid #1f1f1f; }
+        .modal-title-tag { font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: var(--secondary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; }
+        .modal-title-text { font-size: 1.2rem; font-weight: 700; letter-spacing: .5px; }
+        .modal-close { background: none; border: 1px solid #333; color: var(--muted); width: 30px; height: 30px; border-radius: 4px; cursor: pointer; font-size: .9rem; display: flex; align-items: center; justify-content: center; transition: border-color .2s, color .2s; }
+        .modal-close:hover { border-color: var(--primary); color: var(--text-main); }
+        .modal-body { padding: 24px 28px 28px; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 28px; border-top: 1px solid #1f1f1f; }
+
+        /* ── FORM ── */
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-family: 'Share Tech Mono', monospace; font-size: .68rem; color: var(--label); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+        .form-input { width: 100%; background: #0d0d0d; border: 1px solid #2a2a2a; color: var(--text-main); padding: 11px 14px; font-size: .9rem; font-family: 'Rajdhani', sans-serif; font-weight: 500; border-radius: 5px; outline: none; transition: border-color .2s, box-shadow .2s; letter-spacing: .3px; }
+        .form-input::placeholder { color: #3a3a3a; }
+        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(207,15,71,.1); }
+        .form-textarea { width: 100%; background: #0d0d0d; border: 1px solid #2a2a2a; color: var(--text-main); padding: 12px 14px; font-size: .88rem; font-family: 'Rajdhani', sans-serif; font-weight: 500; border-radius: 5px; outline: none; transition: border-color .2s; resize: vertical; min-height: 100px; line-height: 1.6; }
+        .form-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(207,15,71,.1); }
+        .form-select { width: 100%; background: #0d0d0d; border: 1px solid #2a2a2a; color: var(--text-main); padding: 11px 14px; font-size: .9rem; font-family: 'Rajdhani', sans-serif; font-weight: 600; border-radius: 5px; outline: none; transition: border-color .2s; cursor: pointer; appearance: none; }
+        .form-select:focus { border-color: var(--primary); }
+        .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .flag-wrap { position: relative; }
+        .flag-wrap .form-input { padding-right: 44px; font-family: 'Share Tech Mono', monospace; letter-spacing: 1px; }
+        .flag-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: .85rem; padding: 2px; transition: color .2s; }
+        .flag-toggle:hover { color: var(--secondary); }
+        .form-hint { font-size: .72rem; color: #4a4a4a; font-family: 'Share Tech Mono', monospace; margin-top: 5px; letter-spacing: .5px; }
+
+        /* ── ALERT ── */
+        .alert { padding: 10px 14px; border-radius: 5px; font-family: 'Share Tech Mono', monospace; font-size: .78rem; margin-bottom: 18px; display: none; letter-spacing: .5px; }
+        .alert.show { display: block; }
+        .alert.error   { background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.25); color: #f87171; }
+        .alert.success { background: rgba(74,222,128,.08);  border: 1px solid rgba(74,222,128,.25);  color: #4ade80; }
+
+        /* ── DELETE CONFIRM MODAL ── */
+        .confirm-body { padding: 28px; text-align: center; }
+        .confirm-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .confirm-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        .confirm-sub { font-size: .88rem; color: var(--muted); margin-bottom: 24px; font-weight: 500; }
+        .confirm-btns { display: flex; gap: 12px; justify-content: center; }
+
+        /* ── UPLOAD ZONE ── */
+        .upload-dropzone { border: 2px dashed #2a2a2a; border-radius: 8px; padding: 28px 20px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; position: relative; }
+        .upload-dropzone:hover, .upload-dropzone.drag-over { border-color: var(--primary); background: rgba(207,15,71,.04); }
+        .drop-icon { font-size: 2rem; margin-bottom: 8px; }
+        .drop-text { font-size: .9rem; font-weight: 600; color: var(--label); margin-bottom: 4px; }
+        .drop-link { color: var(--secondary); cursor: pointer; text-decoration: underline; }
+        .drop-sub  { font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: #4a4a4a; letter-spacing: .5px; }
+        .file-row  { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #0d0d0d; border: 1px solid #1f1f1f; border-radius: 5px; margin-bottom: 6px; }
+        .file-row-icon { font-size: 1rem; flex-shrink: 0; }
+        .file-row-name { font-family: 'Share Tech Mono', monospace; font-size: .75rem; color: var(--text-main); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-row-size { font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: var(--muted); flex-shrink: 0; }
+        .file-row-del  { background: none; border: 1px solid rgba(248,113,113,.25); color: #f87171; border-radius: 3px; padding: 2px 8px; font-size: .7rem; cursor: pointer; flex-shrink: 0; transition: background .15s; font-family: 'Rajdhani', sans-serif; font-weight: 700; }
+        .file-row-del:hover { background: rgba(248,113,113,.1); }
+        .progress-bar-wrap { flex: 1; height: 4px; background: #1f1f1f; border-radius: 2px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--secondary); border-radius: 2px; transition: width .2s; }
+        .file-status-ok  { font-size: .7rem; color: #4ade80; font-family: 'Share Tech Mono', monospace; flex-shrink: 0; }
+        .file-status-err { font-size: .7rem; color: #f87171; font-family: 'Share Tech Mono', monospace; flex-shrink: 0; max-width: 140px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* ── MISC ── */
+        .page-tag { font-family: 'Share Tech Mono', monospace; font-size: .68rem; color: var(--secondary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+        .page-title { font-size: 2rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+        .page-subtitle { font-size: .92rem; color: var(--muted); font-weight: 500; margin-bottom: 32px; }
+        .scanline { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg,transparent,rgba(255,11,85,.08),transparent); animation: scan 6s linear infinite; pointer-events: none; }
+        @keyframes scan { 0%{top:-4px} 100%{top:100%} }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0d0d0d; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+        @media (max-width: 780px) { .sidebar { display: none; } .main { padding: 24px 16px; } .form-row-2 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+    <div style="display:flex;align-items:center;">
+        <a href="/" class="logo">CTF<span>Creator</span></a>
+        <span class="admin-badge">ADMIN</span>
+    </div>
+    <div class="topbar-right">
+        <div class="profile-wrap">
+            <div class="profile-btn">
+                <div class="profile-avatar" id="navInitials">--</div>
+                <span class="profile-name" id="navUsername">Loading…</span>
+                <span class="profile-arrow">▼</span>
+            </div>
+            <div class="profile-dropdown">
+                <a class="dropdown-item" href="/admin">🛡️ &nbsp;Admin Panel</a>
+                <a class="dropdown-item" href="/leaderboard">🏆 &nbsp;Leaderboard</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item danger" id="logoutBtn" href="#">⏻ &nbsp;Logout</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Admin</div>
+            <a class="sidebar-link active" href="/admin"><span class="sidebar-icon">🛡️</span> Challenge Manager</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">// View</div>
+            <a class="sidebar-link" href="/leaderboard"><span class="sidebar-icon">🏆</span> Leaderboard</a>
+            <a class="sidebar-link" href="/challenges"><span class="sidebar-icon">🔍</span> Browse Challenges</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">// Account</div>
+            <a class="sidebar-link" href="#" id="sidebarLogout"><span class="sidebar-icon">⏻</span> Logout</a>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <!-- PAGE HEADER -->
+        <span class="page-tag">// Admin Panel</span>
+        <h1 class="page-title">Challenge Manager</h1>
+        <p class="page-subtitle">Create, edit, and delete challenges visible to all players.</p>
+
+        <!-- STATS ROW -->
+        <div class="stat-row" id="statRow">
+            <div class="stat-pill"><div class="stat-pill-val" id="sTotalChallenges">—</div><div class="stat-pill-lbl">Total Challenges</div></div>
+            <div class="stat-pill"><div class="stat-pill-val" id="sTotalPlayers">—</div><div class="stat-pill-lbl">Players</div></div>
+            <div class="stat-pill"><div class="stat-pill-val" id="sTotalSolves">—</div><div class="stat-pill-lbl">Total Solves</div></div>
+            <div class="stat-pill"><div class="stat-pill-val" id="sTotalAdmins">—</div><div class="stat-pill-lbl">Admins</div></div>
+        </div>
+
+        <!-- CHALLENGE LIST -->
+        <div class="section-hdr">
+            <div>
+                <span class="section-tag">// Manage</span>
+                <h2 class="section-title">All Challenges</h2>
+            </div>
+            <button class="btn-primary" id="openCreateBtn">＋ New Challenge</button>
+        </div>
+
+        <div class="table-card" style="position:relative;">
+            <div class="scanline"></div>
+            <table class="chall-table">
+                <thead>
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th>Challenge</th>
+                        <th>Category</th>
+                        <th>Difficulty</th>
+                        <th>Points</th>
+                        <th>Solves</th>
+                        <th>Created</th>
+                        <th style="width:140px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="challBody">
+                    <tr><td colspan="8" class="empty-row">Loading challenges…</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+</div>
+
+<!-- ═══════════ CREATE / EDIT MODAL ═══════════ -->
+<div class="modal-overlay" id="formModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title-tag" id="formModalTag">// New Challenge</div>
+                <div class="modal-title-text" id="formModalTitle">Create Challenge</div>
+            </div>
+            <button class="modal-close" id="formModalClose">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert error" id="formError"></div>
+            <div class="alert success" id="formSuccess"></div>
+
+            <div class="form-row-2">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Challenge Title</label>
+                    <input class="form-input" id="fTitle" type="text" placeholder="e.g. SQL Injection Maze" maxlength="120">
+                </div>
+            </div>
+
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="fCategory">
+                        <option value="">— Select —</option>
+                        <option value="Web Exploitation">Web Exploitation</option>
+                        <option value="Cryptography">Cryptography</option>
+                        <option value="Digital Forensics">Digital Forensics</option>
+                        <option value="Reverse Engineering">Reverse Engineering</option>
+                        <option value="Binary Pwn">Binary Pwn</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Difficulty</label>
+                    <select class="form-select" id="fDifficulty">
+                        <option value="">— Select —</option>
+                        <option value="Basic">Basic</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Points (1 – 1000)</label>
+                <input class="form-input" id="fPoints" type="number" placeholder="e.g. 300" min="1" max="1000">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-textarea" id="fDesc" placeholder="Describe the challenge scenario. HTML tags like &lt;code&gt; are supported." rows="5"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Flag</label>
+                <div class="flag-wrap">
+                    <input class="form-input" id="fFlag" type="password" placeholder="CTF{s0me_fl4g_h3r3}" autocomplete="off">
+                    <button class="flag-toggle" id="flagToggle" type="button" title="Show / hide flag">👁</button>
+                </div>
+                <div class="form-hint">Must be in CTF{...} format</div>
+            </div>
+
+            <!-- FILE UPLOAD SECTION — only shown after challenge is saved (has an ID) -->
+            <div id="fileSection" style="display:none;">
+                <div style="height:1px;background:linear-gradient(90deg,transparent,#2a2a2a,transparent);margin:20px 0;"></div>
+                <label class="form-label">Attached Files <span style="color:#4a4a4a;">(optional)</span></label>
+
+                <!-- Current files list -->
+                <div id="currentFilesList" style="display:none;margin-bottom:12px;">
+                    <div style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:#4a2a2a;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">// Uploaded Files</div>
+                    <div id="currentFilesItems"></div>
+                </div>
+
+                <!-- Drop zone -->
+                <div class="upload-dropzone" id="uploadDropzone">
+                    <div class="drop-icon">📁</div>
+                    <div class="drop-text">Drop files here or <span class="drop-link" id="dropLink">browse</span></div>
+                    <div class="drop-sub">Max 20 MB per file · .py .c .elf .pcap .zip .bin .txt .png .pem and more</div>
+                    <input type="file" id="fileInput" multiple style="display:none;">
+                </div>
+
+                <!-- Upload progress list -->
+                <div id="uploadProgressList" style="margin-top:10px;"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-ghost" id="formCancelBtn">Cancel</button>
+            <button class="btn-primary" id="formSaveBtn">💾 Save Challenge</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ DELETE CONFIRM MODAL ═══════════ -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:420px;">
+        <div class="confirm-body">
+            <div class="confirm-icon">🗑️</div>
+            <div class="confirm-title">Delete Challenge?</div>
+            <div class="confirm-sub" id="deleteConfirmSub">This will permanently remove the challenge and all associated solves. This cannot be undone.</div>
+            <div class="confirm-btns">
+                <button class="btn-ghost" id="deleteCancelBtn">Cancel</button>
+                <button class="btn-danger" id="deleteConfirmBtn" style="padding:8px 20px;font-size:.85rem;">⚠ Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── helpers ──────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+    const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    if (res.status === 401) { window.location.href = '/login'; return null; }
+    if (res.status === 403) { window.location.href = '/dashboard'; return null; }
+    return res.json();
+}
+
+function catClass(cat) {
+    return { 'Web Exploitation':'cat-web','Cryptography':'cat-crypto','Digital Forensics':'cat-for','Reverse Engineering':'cat-rev','Binary Pwn':'cat-pwn' }[cat] || 'cat-web';
+}
+function diffClass(d) {
+    return { 'Basic':'diff-basic','Intermediate':'diff-inter','Advanced':'diff-adv' }[d] || 'diff-basic';
+}
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fileIcon(f) {
+    f = f.toLowerCase();
+    if (f.endsWith('.py') || f.endsWith('.js') || f.endsWith('.c') || f.endsWith('.php')) return '📄';
+    if (f.endsWith('.zip') || f.endsWith('.gz') || f.endsWith('.tar') || f.endsWith('.7z')) return '🗜️';
+    if (f.endsWith('.elf') || f.endsWith('.bin') || f.endsWith('.exe') || f.endsWith('.out')) return '⚙️';
+    if (f.endsWith('.pcap') || f.endsWith('.pcapng')) return '📡';
+    if (f.endsWith('.pem') || f.endsWith('.key') || f.endsWith('.crt')) return '🔑';
+    if (f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.jpeg') || f.endsWith('.gif')) return '🖼️';
+    if (f.endsWith('.txt') || f.endsWith('.md')) return '📝';
+    if (f.includes('docker')) return '🐋';
+    if (f.endsWith('.sql') || f.endsWith('.db') || f.endsWith('.sqlite')) return '🗄️';
+    return '📄';
+}
+function fmtBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    return (b / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// ── state ─────────────────────────────────────────────────────────────
+let editingId  = null;
+let deletingId = null;
+let challenges = [];
+
+// ── boot ─────────────────────────────────────────────────────────────
+(async () => {
+    const me = await api('/api/dashboard');
+    if (!me) return;
+    document.getElementById('navInitials').textContent = me.initials;
+    document.getElementById('navUsername').textContent  = me.username;
+    await Promise.all([loadStats(), loadChallenges()]);
+})();
+
+// ── stats ─────────────────────────────────────────────────────────────
+async function loadStats() {
+    const s = await api('/api/admin/stats');
+    if (!s) return;
+    document.getElementById('sTotalChallenges').textContent = s.total_challenges;
+    document.getElementById('sTotalPlayers').textContent    = s.total_players;
+    document.getElementById('sTotalSolves').textContent     = s.total_solves;
+    document.getElementById('sTotalAdmins').textContent     = s.total_admins;
+}
+
+// ── challenge list ────────────────────────────────────────────────────
+async function loadChallenges() {
+    const data = await api('/api/admin/challenges');
+    if (!data) return;
+    challenges = data;
+    renderTable(data);
+}
+
+function renderTable(rows) {
+    const tbody = document.getElementById('challBody');
+    if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-row">// No challenges yet — create your first one.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = rows.map((c, i) => `
+        <tr>
+            <td style="color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:.8rem;">${String(i + 1).padStart(2,'0')}</td>
+            <td>
+                <div class="chall-title-cell">
+                    ${escHtml(c.title)}
+                    <small>ID #${c.id} · ${escHtml(c.created_at)} · ${fileCount(c.files)} file${fileCount(c.files) !== 1 ? 's' : ''}</small>
+                </div>
+            </td>
+            <td><span class="cat-badge ${catClass(c.category)}">${escHtml(c.category)}</span></td>
+            <td><span class="diff-badge ${diffClass(c.difficulty)}">${escHtml(c.difficulty)}</span></td>
+            <td class="pts-cell">${c.points}</td>
+            <td class="solve-cell">${c.solve_count} solve${c.solve_count !== 1 ? 's' : ''}</td>
+            <td style="font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--muted);">${escHtml(c.created_at)}</td>
+            <td>
+                <div class="action-cell">
+                    <button class="btn-edit" onclick="openEdit(${c.id})">✏ Edit</button>
+                    <button class="btn-danger" onclick="openDelete(${c.id}, '${escHtml(c.title).replace(/'/g,"\\'")}')">🗑</button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function fileCount(files) {
+    if (!files) return 0;
+    return files.split(',').filter(f => f.trim()).length;
+}
+
+// ── FORM MODAL ────────────────────────────────────────────────────────
+function openCreate() {
+    editingId = null;
+    clearForm();
+    document.getElementById('formModalTag').textContent   = '// New Challenge';
+    document.getElementById('formModalTitle').textContent = 'Create Challenge';
+    document.getElementById('formSaveBtn').textContent    = '💾 Save Challenge';
+    document.getElementById('fileSection').style.display  = 'none'; // shown after save
+    openModal('formModal');
+}
+
+function openEdit(id) {
+    const c = challenges.find(x => x.id === id);
+    if (!c) return;
+    editingId = id;
+    clearForm();
+    document.getElementById('fTitle').value      = c.title;
+    document.getElementById('fCategory').value   = c.category;
+    document.getElementById('fDifficulty').value = c.difficulty;
+    document.getElementById('fPoints').value     = c.points;
+    document.getElementById('fDesc').value       = c.description;
+    document.getElementById('fFlag').value       = c.flag;
+    document.getElementById('formModalTag').textContent   = '// Edit Challenge';
+    document.getElementById('formModalTitle').textContent = `Edit: ${c.title}`;
+    document.getElementById('formSaveBtn').textContent    = '💾 Update Challenge';
+    // Show file section immediately (challenge already has an ID)
+    document.getElementById('fileSection').style.display = '';
+    renderCurrentFiles(c.files, id);
+    openModal('formModal');
+}
+
+function clearForm() {
+    ['fTitle','fCategory','fDifficulty','fPoints','fDesc','fFlag'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    document.getElementById('uploadProgressList').innerHTML = '';
+    hideAlert('formError');
+    hideAlert('formSuccess');
+}
+
+// ── SAVE (create or update) ───────────────────────────────────────────
+document.getElementById('formSaveBtn').addEventListener('click', async () => {
+    hideAlert('formError');
+    hideAlert('formSuccess');
+
+    const payload = {
+        title:       document.getElementById('fTitle').value.trim(),
+        category:    document.getElementById('fCategory').value,
+        difficulty:  document.getElementById('fDifficulty').value,
+        points:      parseInt(document.getElementById('fPoints').value) || 0,
+        description: document.getElementById('fDesc').value.trim(),
+        flag:        document.getElementById('fFlag').value.trim(),
+    };
+
+    const isEdit = editingId !== null;
+    const url    = isEdit ? `/api/admin/challenges/${editingId}` : '/api/admin/challenges';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    const btn = document.getElementById('formSaveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    const data = await api(url, { method, body: JSON.stringify(payload) });
+    btn.disabled = false;
+    btn.textContent = isEdit ? '💾 Update Challenge' : '💾 Save Challenge';
+
+    if (!data) return;
+    if (data.error) { showAlert('formError', data.error); return; }
+
+    if (!isEdit) {
+        // New challenge created — reveal file upload section now that we have an ID
+        editingId = data.id;
+        document.getElementById('formModalTag').textContent   = '// New Challenge — Step 2';
+        document.getElementById('formModalTitle').textContent = `${payload.title} — Add Files`;
+        document.getElementById('formSaveBtn').textContent    = '💾 Update Challenge';
+        document.getElementById('fileSection').style.display  = '';
+        renderCurrentFiles('', data.id);
+        showAlert('formSuccess', `Challenge created! You can now attach files below, or close to finish.`);
+    } else {
+        showAlert('formSuccess', `Challenge updated successfully.`);
+    }
+
+    await Promise.all([loadChallenges(), loadStats()]);
+});
+
+// ── CURRENT FILES LIST ────────────────────────────────────────────────
+function renderCurrentFiles(filesStr, challengeId) {
+    const files   = (filesStr || '').split(',').filter(f => f.trim());
+    const section = document.getElementById('currentFilesList');
+    const items   = document.getElementById('currentFilesItems');
+
+    if (!files.length) {
+        section.style.display = 'none';
+        items.innerHTML = '';
+        return;
+    }
+
+    section.style.display = '';
+    items.innerHTML = files.map(f => `
+        <div class="file-row" id="frow-${escHtml(f)}">
+            <span class="file-row-icon">${fileIcon(f)}</span>
+            <span class="file-row-name">${escHtml(f)}</span>
+            <a href="/files/${challengeId}/${encodeURIComponent(f)}" target="_blank"
+               style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--secondary);text-decoration:none;flex-shrink:0;"
+               title="Download">↓ dl</a>
+            <button class="file-row-del" onclick="deleteFile(${challengeId}, '${escHtml(f).replace(/'/g,"\\'")}')">✕ Remove</button>
+        </div>
+    `).join('');
+}
+
+async function deleteFile(challengeId, filename) {
+    const row = document.getElementById(`frow-${filename}`);
+    if (row) row.style.opacity = '.4';
+
+    const data = await fetch(`/api/admin/challenges/${challengeId}/files/${encodeURIComponent(filename)}`, {
+        method: 'DELETE',
+    }).then(r => r.json()).catch(() => null);
+
+    if (data && data.ok) {
+        renderCurrentFiles(data.files.join(','), challengeId);
+        // Sync local state
+        const idx = challenges.findIndex(c => c.id === challengeId);
+        if (idx !== -1) challenges[idx].files = data.files.join(',');
+        await loadChallenges();
+    } else {
+        if (row) row.style.opacity = '1';
+    }
+}
+
+// ── FILE UPLOAD ───────────────────────────────────────────────────────
+const dropzone  = document.getElementById('uploadDropzone');
+const fileInput = document.getElementById('fileInput');
+
+document.getElementById('dropLink').addEventListener('click', e => {
+    e.stopPropagation();
+    fileInput.click();
+});
+dropzone.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) uploadFiles(Array.from(fileInput.files));
+    fileInput.value = '';
+});
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length) uploadFiles(files);
+});
+
+async function uploadFiles(files) {
+    if (editingId === null) return; // should never happen — button hidden until save
+
+    const progressList = document.getElementById('uploadProgressList');
+
+    for (const file of files) {
+        // Add progress row
+        const rowId = `up-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const row   = document.createElement('div');
+        row.className = 'file-row';
+        row.id        = rowId;
+        row.innerHTML = `
+            <span class="file-row-icon">${fileIcon(file.name)}</span>
+            <span class="file-row-name">${escHtml(file.name)}</span>
+            <span class="file-row-size">${fmtBytes(file.size)}</span>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:0%"></div></div>
+            <span class="file-status-ok" style="display:none;">✓</span>
+            <span class="file-status-err" style="display:none;"></span>
+        `;
+        progressList.appendChild(row);
+
+        const fill   = row.querySelector('.progress-bar-fill');
+        const okEl   = row.querySelector('.file-status-ok');
+        const errEl  = row.querySelector('.file-status-err');
+
+        // Animate bar to 80% while uploading
+        fill.style.width = '80%';
+
+        const form = new FormData();
+        form.append('files', file);
+
+        try {
+            const res  = await fetch(`/api/admin/challenges/${editingId}/files`, {
+                method: 'POST',
+                body:   form,
+                // No Content-Type header — browser sets multipart boundary automatically
+            });
+            const data = await res.json();
+
+            fill.style.width = '100%';
+
+            if (data.errors && data.errors.length) {
+                fill.style.background = '#f87171';
+                errEl.textContent     = data.errors[0];
+                errEl.style.display   = '';
+            } else {
+                okEl.style.display = '';
+                // Update current files section
+                renderCurrentFiles(data.files.join(','), editingId);
+                // Sync local state
+                const idx = challenges.findIndex(c => c.id === editingId);
+                if (idx !== -1) challenges[idx].files = data.files.join(',');
+                await loadChallenges();
+            }
+        } catch (err) {
+            fill.style.background = '#f87171';
+            fill.style.width      = '100%';
+            errEl.textContent     = 'Upload failed';
+            errEl.style.display   = '';
+        }
+
+        // Remove progress row after 3 s on success
+        if (!errEl.style.display || errEl.style.display === 'none') {
+            setTimeout(() => row.remove(), 3000);
+        }
+    }
+}
+
+// ── DELETE MODAL ───────────────────────────────────────────────────────
+function openDelete(id, title) {
+    deletingId = id;
+    document.getElementById('deleteConfirmSub').textContent =
+        `"${title}" will be permanently removed along with all ${challenges.find(c=>c.id===id)?.solve_count ?? 0} solve record(s) and uploaded files. This cannot be undone.`;
+    openModal('deleteModal');
+}
+
+document.getElementById('deleteConfirmBtn').addEventListener('click', async () => {
+    if (!deletingId) return;
+    const btn = document.getElementById('deleteConfirmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+    const data = await api(`/api/admin/challenges/${deletingId}`, { method: 'DELETE' });
+    btn.disabled = false;
+    btn.textContent = '⚠ Delete';
+    if (data && data.ok) {
+        closeModal('deleteModal');
+        deletingId = null;
+        await Promise.all([loadChallenges(), loadStats()]);
+    }
+});
+
+// ── modal helpers ─────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.getElementById('openCreateBtn').addEventListener('click', openCreate);
+document.getElementById('formModalClose').addEventListener('click', () => closeModal('formModal'));
+document.getElementById('formCancelBtn').addEventListener('click',  () => closeModal('formModal'));
+document.getElementById('deleteCancelBtn').addEventListener('click',() => closeModal('deleteModal'));
+
+['formModal','deleteModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', e => {
+        if (e.target === document.getElementById(id)) closeModal(id);
+    });
+});
+
+// flag show/hide toggle
+let flagVisible = false;
+document.getElementById('flagToggle').addEventListener('click', () => {
+    flagVisible = !flagVisible;
+    document.getElementById('fFlag').type = flagVisible ? 'text' : 'password';
+    document.getElementById('flagToggle').textContent = flagVisible ? '🙈' : '👁';
+});
+
+// ── alert helpers ─────────────────────────────────────────────────────
+function showAlert(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+}
+function hideAlert(id) {
+    const el = document.getElementById(id);
+    el.textContent = '';
+    el.classList.remove('show');
+}
+
+// ── logout ────────────────────────────────────────────────────────────
+async function doLogout() {
+    await api('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+}
+document.getElementById('logoutBtn').addEventListener('click', e => { e.preventDefault(); doLogout(); });
+document.getElementById('sidebarLogout').addEventListener('click', e => { e.preventDefault(); doLogout(); });
+</script>
+</body>
+</html>

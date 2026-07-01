@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF Challenge Creator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-color: #000000;
+            --primary: #CF0F47;
+            --secondary: #FF0B55;
+            --text-main: #FFDEDE;
+            --card-bg: #1a1a1a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Rajdhani', sans-serif;
+            line-height: 1.6;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(207, 15, 71, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(207, 15, 71, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            border-bottom: 1px solid #1f1f1f;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-family: 'Share Tech Mono', monospace;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .logo span { color: var(--secondary); }
+
+        .nav-auth {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Rajdhani', sans-serif;
+            transition: 0.3s;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 0.9rem;
+        }
+
+        .btn-solid {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-solid:hover {
+            background-color: var(--secondary);
+            box-shadow: 0 0 18px rgba(255, 11, 85, 0.45);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid #555;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--text-main);
+            background: rgba(255, 222, 222, 0.06);
+        }
+
+        .btn-solid-large {
+            padding: 14px 40px;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            background-color: var(--secondary);
+            color: white;
+            margin: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-solid-large::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.4s;
+        }
+
+        .btn-solid-large:hover { box-shadow: 0 0 24px rgba(255, 11, 85, 0.5); }
+        .btn-solid-large:hover::after { transform: translateX(100%); }
+
+        .btn-dashboard {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .btn-dashboard:hover {
+            background: rgba(74, 222, 128, 0.25);
+            box-shadow: 0 0 18px rgba(74, 222, 128, 0.2);
+        }
+
+        .user-greeting {
+            font-size: 0.85rem;
+            color: #cca8a8;
+            margin-right: 8px;
+            font-weight: 500;
+        }
+
+        .user-greeting strong {
+            color: var(--secondary);
+        }
+
+        .hero {
+            padding: 110px 0 90px;
+            text-align: center;
+            background: radial-gradient(ellipse at center, #2b030f 0%, #000000 65%);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .hero::before,
+        .hero::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(207,15,71,0.3), transparent);
+        }
+        .hero::before { top: 0; }
+        .hero::after  { bottom: 0; }
+
+        .hero-tag {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--secondary);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            display: block;
+            opacity: 0;
+            animation: fadeUp 0.5s ease 0.1s both;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            line-height: 1.15;
+            opacity: 0;
+            animation: fadeUp 0.5s ease 0.2s both;
+        }
+
+        .highlight {
+            color: var(--secondary);
+            text-shadow: 0 0 20px rgba(255, 11, 85, 0.45);
+        }
+
+        .intro-text {
+            font-size: 1.15rem;
+            font-weight: 500;
+            max-width: 680px;
+            margin: 0 auto 44px;
+            color: #cca8a8;
+            opacity: 0;
+            animation: fadeUp 0.5s ease 0.3s both;
+        }
+
+        .hero-btns {
+            opacity: 0;
+            animation: fadeUp 0.5s ease 0.4s both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .ranks-section {
+            padding: 72px 0 60px;
+            position: relative;
+            z-index: 1;
+            border-bottom: 1px solid #111;
+        }
+
+        .section-tag {
+            display: block;
+            text-align: center;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--secondary);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .ranks-section h2 {
+            text-align: center;
+            margin-bottom: 48px;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 1px;
+        }
+
+        .rank-track {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            position: relative;
+        }
+
+        .rank-track::before {
+            content: '';
+            position: absolute;
+            top: 38px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, #1a0008, var(--primary), var(--secondary), #fff0f0);
+            z-index: 0;
+        }
+
+        .rank-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            padding: 0 8px;
+            cursor: default;
+        }
+
+        .rank-node {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid;
+            margin-bottom: 16px;
+            position: relative;
+            transition: transform 0.25s, box-shadow 0.25s;
+        }
+
+        .rank-item:hover .rank-node {
+            transform: scale(1.1) translateY(-4px);
+        }
+
+        .rank-node-icon { font-size: 1.4rem; line-height: 1; }
+
+        .rank-item:nth-child(1) .rank-node {
+            background: rgba(100, 100, 120, 0.12);
+            border-color: #6c6c8a;
+            box-shadow: 0 0 14px rgba(108,108,138,0.2);
+        }
+        .rank-item:nth-child(1):hover .rank-node { box-shadow: 0 0 24px rgba(108,108,138,0.45); }
+
+        .rank-item:nth-child(2) .rank-node {
+            background: rgba(99,179,237,0.1);
+            border-color: #63b3ed;
+            box-shadow: 0 0 14px rgba(99,179,237,0.2);
+        }
+        .rank-item:nth-child(2):hover .rank-node { box-shadow: 0 0 24px rgba(99,179,237,0.4); }
+
+        .rank-item:nth-child(3) .rank-node {
+            background: rgba(74,222,128,0.1);
+            border-color: #4ade80;
+            box-shadow: 0 0 14px rgba(74,222,128,0.2);
+        }
+        .rank-item:nth-child(3):hover .rank-node { box-shadow: 0 0 24px rgba(74,222,128,0.4); }
+
+        .rank-item:nth-child(4) .rank-node {
+            background: rgba(251,146,60,0.1);
+            border-color: #fb923c;
+            box-shadow: 0 0 14px rgba(251,146,60,0.2);
+        }
+        .rank-item:nth-child(4):hover .rank-node { box-shadow: 0 0 24px rgba(251,146,60,0.4); }
+
+        .rank-item:nth-child(5) .rank-node {
+            background: rgba(207,15,71,0.12);
+            border-color: var(--secondary);
+            box-shadow: 0 0 18px rgba(255,11,85,0.3);
+        }
+        .rank-item:nth-child(5):hover .rank-node { box-shadow: 0 0 32px rgba(255,11,85,0.6); }
+
+        .rank-name {
+            font-size: 0.92rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .rank-item:nth-child(1) .rank-name { color: #9898b8; }
+        .rank-item:nth-child(2) .rank-name { color: #63b3ed; }
+        .rank-item:nth-child(3) .rank-name { color: #4ade80; }
+        .rank-item:nth-child(4) .rank-name { color: #fb923c; }
+        .rank-item:nth-child(5) .rank-name { color: var(--secondary); }
+
+        .rank-pts {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            color: #4a2a2a;
+            letter-spacing: 1px;
+        }
+
+        .rank-item:nth-child(5) .rank-pts { color: #7a2a3a; }
+
+        .features {
+            padding: 80px 0 100px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .features h2 {
+            text-align: center;
+            margin-bottom: 60px;
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 1px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 28px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 32px 28px;
+            border-radius: 0 0 10px 10px;
+            border-top: 3px solid var(--primary);
+            border-left: 1px solid #2a2a2a;
+            border-right: 1px solid #2a2a2a;
+            border-bottom: 1px solid #2a2a2a;
+            transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top left, rgba(207,15,71,0.06), transparent 60%);
+            pointer-events: none;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            background: #222;
+            box-shadow: 0 12px 40px rgba(207, 15, 71, 0.15);
+        }
+
+        .card-number {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            color: #4a2a2a;
+            letter-spacing: 2px;
+            margin-bottom: 14px;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 12px;
+            color: var(--secondary);
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .feature-card p {
+            color: #cca8a8;
+            font-size: 0.95rem;
+            font-weight: 500;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 700px) {
+            h1 { font-size: 2.2rem; }
+            .rank-track { flex-direction: column; gap: 24px; align-items: flex-start; }
+            .rank-track::before { display: none; }
+            .rank-item { flex-direction: row; text-align: left; gap: 16px; }
+            .rank-node { width: 52px; height: 52px; flex-shrink: 0; margin-bottom: 0; }
+            .rank-node-icon { font-size: 1.1rem; }
+
+            .navbar {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+
+            .nav-auth {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="logo">CTF<span>Creator</span></a>
+        <div class="nav-auth" id="navAuth">
+            <!-- Dynamic content inserted by JavaScript -->
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <span class="hero-tag">// Security Challenge Platform</span>
+            <h1>CTF Challenge Creator <br><span class="highlight">With Solver Bot</span></h1>
+            <p class="intro-text">
+                The ultimate playground for security enthusiasts. Architect complex vulnerabilities,
+                test them against our advanced AI Solver Bot, and deploy world-class challenges in minutes.
+            </p>
+            <div class="hero-btns" id="heroButtons">
+                <!-- Dynamic content inserted by JavaScript -->
+            </div>
+        </div>
+    </header>
+
+    <section class="ranks-section">
+        <div class="container">
+            <span class="section-tag">// Rank Progression</span>
+            <h2>Climb the Hacker Ladder</h2>
+
+            <div class="rank-track">
+                <div class="rank-item">
+                    <div class="rank-node">
+                        <span class="rank-node-icon">👶</span>
+                    </div>
+                    <div class="rank-name">Script Kiddie</div>
+                    <div class="rank-pts">0 – 200 pts</div>
+                </div>
+
+                <div class="rank-item">
+                    <div class="rank-node">
+                        <span class="rank-node-icon">🎮</span>
+                    </div>
+                    <div class="rank-name">CTF Player</div>
+                    <div class="rank-pts">201 – 400 pts</div>
+                </div>
+
+                <div class="rank-item">
+                    <div class="rank-node">
+                        <span class="rank-node-icon">💻</span>
+                    </div>
+                    <div class="rank-name">Hacker</div>
+                    <div class="rank-pts">401 – 600 pts</div>
+                </div>
+
+                <div class="rank-item">
+                    <div class="rank-node">
+                        <span class="rank-node-icon">🔓</span>
+                    </div>
+                    <div class="rank-name">Exploiter</div>
+                    <div class="rank-pts">601 – 800 pts</div>
+                </div>
+
+                <div class="rank-item">
+                    <div class="rank-node">
+                        <span class="rank-node-icon">💀</span>
+                    </div>
+                    <div class="rank-name">The Ghost</div>
+                    <div class="rank-pts">801 + pts</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <span class="section-tag">// Platform Capabilities</span>
+            <h2>What This Platform Provides</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="card-number">01 —</div>
+                    <h3>Challenge Creation</h3>
+                    <p>Build Web, Pwn, Crypto, and Reverse Engineering challenges with a powerful editor designed for security professionals.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="card-number">02 —</div>
+                    <h3>AI Solver Bot</h3>
+                    <p>Validate your challenges instantly. Our bot attempts to solve your creation to ensure it's fair but firm.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="card-number">03 —</div>
+                    <h3>Gamified Learning</h3>
+                    <p>Earn points, unlock ranks, and compete on the leaderboard. Every challenge you crack brings you one step closer to becoming The Ghost.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const navAuth = document.getElementById('navAuth');
+        const heroButtons = document.getElementById('heroButtons');
+
+        function renderLoggedOut() {
+            navAuth.innerHTML = `
+                <button class="btn btn-outline" onclick="location.href='/login'">Login</button>
+                <button class="btn btn-solid" onclick="location.href='/signup'">Sign Up</button>
+            `;
+            heroButtons.innerHTML = `
+                <button class="btn btn-solid-large" onclick="location.href='/signup'">Get Started</button>
+            `;
+        }
+
+        function renderLoggedIn(username) {
+            navAuth.innerHTML = `
+                <span class="user-greeting">👋 <strong>${username}</strong></span>
+                <button class="btn btn-dashboard" onclick="location.href='/dashboard'">📊 Dashboard</button>
+                <button class="btn btn-outline" id="logoutBtn">Logout</button>
+            `;
+            heroButtons.innerHTML = `
+                <button class="btn btn-solid-large" onclick="location.href='/dashboard'">Go to Dashboard</button>
+                <button class="btn btn-outline" onclick="location.href='/api/challenges'">Browse Challenges →</button>
+            `;
+
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                try {
+                    const res = await fetch('/api/auth/logout', { method: 'POST' });
+                    if (res.ok) {
+                        window.location.reload();
+                    } else {
+                        window.location.reload();
+                    }
+                } catch (err) {
+                    console.error('Logout error:', err);
+                    window.location.reload();
+                }
+            });
+        }
+
+        async function checkSession() {
+            try {
+                const res = await fetch('/api/me');
+                const data = await res.json();
+
+                if (data.authenticated && data.username) {
+                    renderLoggedIn(data.username);
+                } else {
+                    renderLoggedOut();
+                }
+            } catch (err) {
+                console.warn('Session check failed, showing logged-out state.', err);
+                renderLoggedOut();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', checkSession);
+    </script>
+
+</body>
+</html>
