@@ -158,7 +158,32 @@
             .hero-right { align-items: center; }
             .profile-hero::after { display: none; }
         }
-    </style>
+    
+        /* NAV TERMINAL */
+        .terminal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(4px); z-index: 1000; align-items: flex-start; justify-content: center; padding-top: 8vh; }
+        .terminal-overlay.active { display: flex; }
+        .terminal-window { width: min(640px, 92vw); background: #0a0a0a; border: 1px solid var(--card-border); border-radius: 8px; box-shadow: 0 0 40px rgba(207,15,71,.2); overflow: hidden; }
+        .terminal-titlebar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #141414; border-bottom: 1px solid var(--card-border); }
+        .terminal-dots { display: flex; gap: 6px; }
+        .terminal-dots span { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+        .terminal-dots span:nth-child(1) { background: #ff5f56; }
+        .terminal-dots span:nth-child(2) { background: #ffbd2e; }
+        .terminal-dots span:nth-child(3) { background: #27c93f; }
+        .terminal-title { font-family: 'Share Tech Mono', monospace; font-size: .68rem; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+        .terminal-close { cursor: pointer; color: var(--muted); font-size: .9rem; background: none; border: none; line-height: 1; }
+        .terminal-close:hover { color: var(--secondary); }
+        .terminal-body { padding: 14px 16px; height: 320px; overflow-y: auto; font-family: 'Share Tech Mono', monospace; font-size: .78rem; line-height: 1.7; color: var(--text-main); }
+        .terminal-body::-webkit-scrollbar { width: 6px; }
+        .terminal-body::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
+        .terminal-line { white-space: pre-wrap; word-break: break-word; }
+        .terminal-line.cmd { color: var(--secondary); }
+        .terminal-line.err { color: #ff6b6b; }
+        .terminal-line.ok { color: #27c93f; }
+        .terminal-line.muted { color: var(--muted); }
+        .terminal-inputrow { display: flex; align-items: center; gap: 8px; padding: 0 16px 14px; border-top: 1px solid transparent; }
+        .terminal-prompt { color: var(--secondary); font-family: 'Share Tech Mono', monospace; font-size: .78rem; white-space: nowrap; }
+        .terminal-input { flex: 1; background: none; border: none; outline: none; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: .78rem; }
+</style>
 </head>
 <body>
 
@@ -166,8 +191,7 @@
 <nav class="topbar">
     <a href="/" class="logo">CTF<span>Creator</span></a>
     <div class="topbar-right">
-        <div class="topbar-icon">🔔</div>
-        <div class="topbar-icon">⌨️</div>
+        <div class="topbar-icon" id="terminalBtn" title="Terminal">⌨️</div>
         <div class="profile-wrap">
             <div class="profile-btn">
                 <div class="nav-avatar" id="navInitials">--</div>
@@ -455,5 +479,163 @@ document.getElementById('logoutBtn').addEventListener('click', async e => {
 
 load();
 </script>
+
+<!-- NAV TERMINAL -->
+<div class="terminal-overlay" id="terminalOverlay">
+    <div class="terminal-window">
+        <div class="terminal-titlebar">
+            <div class="terminal-dots"><span></span><span></span><span></span></div>
+            <div class="terminal-title">nav_terminal</div>
+            <button class="terminal-close" id="terminalCloseBtn" title="Close">✕</button>
+        </div>
+        <div class="terminal-body" id="terminalBody">
+            <div class="terminal-line">CTFCreator navigation terminal. Type <span style="color:var(--secondary)">help</span> for a list of commands.</div>
+        </div>
+        <div class="terminal-inputrow">
+            <span class="terminal-prompt">guest@ctfcreator:~$</span>
+            <input type="text" class="terminal-input" id="terminalInput" autocomplete="off" spellcheck="false" />
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const PAGES = {
+        home: '/', dashboard: '/dashboard', challenges: '/challenges',
+        leaderboard: '/leaderboard', settings: '/settings',
+        admin: '/admin', login: '/login', signup: '/signup', logout: '/logout'
+    };
+
+    const overlay = document.getElementById('terminalOverlay');
+    const body = document.getElementById('terminalBody');
+    const input = document.getElementById('terminalInput');
+    const terminalBtn = document.getElementById('terminalBtn');
+    const closeBtn = document.getElementById('terminalCloseBtn');
+
+    function openTerminal() {
+        overlay.classList.add('active');
+        input.value = '';
+        input.focus();
+    }
+
+    function closeTerminal() {
+        overlay.classList.remove('active');
+    }
+
+    function print(text, cls) {
+        const line = document.createElement('div');
+        line.className = 'terminal-line' + (cls ? ' ' + cls : '');
+        line.textContent = text;
+        body.appendChild(line);
+        body.scrollTop = body.scrollHeight;
+    }
+
+    async function getMe() {
+        try {
+            const res = await fetch('/api/me');
+            return await res.json();
+        } catch (e) {
+            return { authenticated: false };
+        }
+    }
+
+    async function runCommand(raw) {
+        const cmdline = raw.trim();
+        print('guest@ctfcreator:~$ ' + cmdline, 'cmd');
+        if (!cmdline) return;
+
+        const [cmdRaw, ...args] = cmdline.split(/\s+/);
+        const cmd = cmdRaw.toLowerCase();
+        const arg = (args[0] || '').toLowerCase();
+
+        switch (cmd) {
+            case 'help':
+                print('Available commands:');
+                print('  go <page>    navigate to a page');
+                print('  cd <page>    alias for go');
+                print('  ls           list available pages');
+                print('  whoami       show current logged-in user');
+                print('  pwd          show current page path');
+                print('  clear        clear the terminal screen');
+                print('  exit         close the terminal');
+                print('pages: home, dashboard, challenges, leaderboard, profile, settings, admin, login, signup, logout', 'muted');
+                break;
+
+            case 'ls':
+            case 'pages':
+                print(Object.keys(PAGES).concat(['profile']).sort().join('   '));
+                break;
+
+            case 'pwd':
+                print(window.location.pathname);
+                break;
+
+            case 'whoami': {
+                const me = await getMe();
+                if (me.authenticated) {
+                    print(`${me.username}  (role: ${me.role || 'user'}, rank: ${me.rank_label || '—'}, points: ${me.points ?? '—'})`, 'ok');
+                } else {
+                    print('not logged in', 'err');
+                }
+                break;
+            }
+
+            case 'clear':
+                body.innerHTML = '';
+                break;
+
+            case 'exit':
+            case 'close':
+            case 'quit':
+                closeTerminal();
+                break;
+
+            case 'cd':
+            case 'go':
+            case 'open':
+                if (!arg) {
+                    print('usage: go <page>  (type "ls" to see available pages)', 'err');
+                    break;
+                }
+                if (arg === 'profile' || arg === 'me') {
+                    const me = await getMe();
+                    if (me.authenticated) {
+                        print(`navigating to /profile/${me.username} ...`, 'ok');
+                        setTimeout(() => window.location.href = `/profile/${me.username}`, 250);
+                    } else {
+                        print('you must be logged in to view a profile', 'err');
+                    }
+                } else if (PAGES[arg]) {
+                    print(`navigating to ${PAGES[arg]} ...`, 'ok');
+                    setTimeout(() => window.location.href = PAGES[arg], 250);
+                } else {
+                    print(`no such page: ${arg}. type "ls" to see available pages.`, 'err');
+                }
+                break;
+
+            default:
+                print(`command not found: ${cmd}. type "help" for a list of commands.`, 'err');
+        }
+    }
+
+    if (terminalBtn) terminalBtn.addEventListener('click', openTerminal);
+    if (closeBtn) closeBtn.addEventListener('click', closeTerminal);
+    if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closeTerminal(); });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.classList.contains('active')) closeTerminal();
+    });
+
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                runCommand(input.value);
+                input.value = '';
+            }
+        });
+    }
+})();
+</script>
+
 </body>
 </html>
